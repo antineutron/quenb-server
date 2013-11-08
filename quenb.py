@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import json
 import random
@@ -26,8 +26,8 @@ except ImportError:
     import bottle
     import bottle.ext.sqlite
 
-from util import get_hash, generate_token
-import scheme
+from quenb.util import get_hash, generate_token
+from quenb import scheme
 
 def error(M):
     sys.stderr.write(str(M))
