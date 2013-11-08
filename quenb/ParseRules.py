@@ -9,7 +9,6 @@ from pyparsing import ParseException, ZeroOrMore
 
 class BoolBinOp(object):
     def __init__(self,t):
-        print "New BoolBinOp("+str(t)+")"
         self.args = t[0][0::2]
     def __str__(self):
         sep = " %s " % self.reprsymbol
@@ -28,7 +27,6 @@ class BoolOr(BoolBinOp):
 
 class BoolNot(object):
     def __init__(self,t):
-        print "New BoolNot("+str(t)+")"
         self.arg = t[0][1]
     def evaluate(self, vardict):
         return not self.arg.evaluate(vardict)
@@ -39,7 +37,6 @@ class BoolNot(object):
 
 class Constant:
     def __init__(self, t):
-        print "New Constant("+str(t)+")"
         self.value = t[0]
     def __str__(self):
         return "Const:<"+str(self.value)+">"
@@ -48,7 +45,6 @@ class Constant:
 
 class Variable:
     def __init__(self, t):
-        print "New Variable("+str(t)+")"
         self.name = t[0]
     def __str__(self):
         return "Var:<"+str(self.name)+">"
@@ -70,7 +66,6 @@ class Comparator:
         "<="  : ( lambda a,b: a <= b ),
     }
     def __init__(self, t):
-        print "New Comparator("+str(t)+")"
         self.op = t[0]
         self.func = self.opn[self.op]
     def __str__(self):
@@ -79,7 +74,6 @@ class Comparator:
 class ComparisonExpression:
 
     def __init__(self,t):
-        print "New CompExp("+str(t)+")"
         self.lhs      = t[0]
         self.operator = t[1]
         self.rhs      = t[2]
@@ -219,7 +213,7 @@ from pprint import pprint
 teststr = "(A == B or C == D)  or E > 5 AND F == G or (H == 1 or b == 'foo')"
 testvars = {
     'A' : 5,
-    'B' : 6,
+    'B' : 5,
     'C' : 's',
     'D' : 'q',
     'E' : 90,
