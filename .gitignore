@@ -1,5 +1,7 @@
 *.py[cod]
 
+quenb.db
+
 # C extensions
 *.so
 
