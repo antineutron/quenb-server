@@ -7,7 +7,7 @@ import sys
 
 os.chdir(os.path.dirname(__file__))
 sys.path.insert(0, '.')
-import quenb
+import quenb-server
 
 application = quenb.app
-quenb.setup('/var/lib/quenb/quenb.db','/var/lib/quenb/geoip.db')
+quenb.setup('/var/lib/quenb/quenb.db')
