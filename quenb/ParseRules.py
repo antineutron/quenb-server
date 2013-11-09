@@ -29,7 +29,7 @@ class BoolOr(BoolBinOp):
     reprsymbol = '|'
     evalop = any
 
-# Unary not operator
+# Unary "not" operator
 class BoolNot(object):
     def __init__(self,t):
         self.arg = t[0][1]
@@ -43,6 +43,8 @@ class BoolNot(object):
 # A constant value such as a string or int
 class Constant:
     def __init__(self, t):
+        #from pprint import pformat
+        #print "new Constant: "+pformat(t)
         self.value = t[0]
     def __str__(self):
         return "Const:<"+str(self.value)+">"
@@ -96,7 +98,6 @@ class ComparisonExpression:
         
     __repr__ = __str__
 
-
 class QuenbRuleParser:
     """
     A rule-parsing class (using PyParsing): parses QuenB rules, which are boolean expressions.
@@ -112,22 +113,24 @@ class QuenbRuleParser:
     
     # Integer, positive or negative
     const_integer = Combine(Optional(plusminus) + number)
-    const_integer.setParseAction(lambda tokens: int(tokens[0]))
+    #const_integer.setParseAction(lambda tokens: int(tokens[0]))
     
     # Floating point number, positive or negative
     const_float = Combine(Optional(plusminus) + Optional(number) + '.' + number)
-    const_float.setParseAction(lambda tokens: float(tokens[0]))
+    #const_float.setParseAction(lambda tokens: float(tokens[0]))
     
     # String, single or double quoted
     const_string = QuotedString('"', escChar='\\', unquoteResults=True) | QuotedString("'", escChar='\\', unquoteResults=True)
-    const_string.setParseAction(lambda tokens: str(tokens[0]))
+    #const_string.setParseAction(lambda tokens: str(tokens[0]))
     
     # Boolean values
-    const_bool  = CaselessKeyword( "true" ) | CaselessKeyword( "false" )
-    const_bool.setParseAction(lambda tokens: tokens[0].lower() == 'true')
+    # NB set the parse action here as booleans are "more special" than other constants,
+    # as they can be an entire expression on their own
+    const_bool  = CaselessKeyword( "true" ) | CaselessKeyword( "false" ).setParseAction(Constant)
+    #const_bool.setParseAction(lambda tokens: Constant(tokens[0].lower() == 'true'))
     
     # Any constant
-    constant = Combine(const_float | const_integer | const_string).setParseAction(Constant)
+    constant = Combine(const_bool | const_float | const_integer | const_string).setParseAction(Constant)
     
     
     # Variable names (alphanumerics and underscores, start with a letter)
@@ -179,7 +182,7 @@ class QuenbRuleParser:
     
     
     # Boolean expressions with operator precedence
-    expression = infixNotation( exp_boolean,
+    expression = exp_boolean | infixNotation( exp_boolean,
         [
             (op_not, 1, opAssoc.RIGHT, BoolNot),
             (op_and, 2, opAssoc.LEFT,  BoolAnd),
@@ -188,7 +191,20 @@ class QuenbRuleParser:
     )
  
     def evaluateRule(self, rule, variables):
-        return self.expression.parseString(rule).evaluate(variables)
+        
+        # Seems obvious... no rule text, evaluate to false
+        if rule == None:
+            return false
+
+        # Fudge factor 0.5 - really need TODO fix parser to generate AST node for true/false...
+        print type(rule)
+        if (rule.lower() == 'true' or rule.lower() == 'false'):
+            print "lol: rule is boolean "+str(rule)
+            return bool(rule)
+
+        print "Eval {} : {}".format(rule, variables)
+        print "Parsed: {}".format(self.expression.parseString(rule))
+        return self.expression.parseString(rule)[0].evaluate(variables)
     
     
     def test(self):
@@ -221,12 +237,15 @@ class QuenbRuleParser:
           ("bool false", self.comparable, "false"),
           ("bool var lt float", self.exp_boolean, "(shoes_var < 23.0)"),
         
+          ("true expression", self.expression, '"true"'),
+          ("comparison expression", self.expression, 'foo == "bar"'),
           ("complex expression", self.expression, '(shoes_var == "\\"3.0") or foo > 99 or "shambone" == "boolaroo" and not (gribble != "shoes" or 23 == 32)'),
         
         )
         
         
         teststr = "(A == B or C == D)  or E > 5 AND F == G or (H == 1 or b == 'foo')"
+        teststr = "true"
         testvars = {
             'A' : 5,
             'B' : 5,
@@ -239,11 +258,12 @@ class QuenbRuleParser:
             'b' : 'afoo',
         }
         print(teststr)
-        
+        from pprint import pprint
+        pprint(self.expression.parseString(teststr))
         rule = self.expression.parseString(teststr)[0]
         print rule
 
-        print rule.evaluate(testvars)
+        #print rule.evaluate(testvars)
         
         for testname, tester, test in tests:
             try:
