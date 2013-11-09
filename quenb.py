@@ -27,57 +27,21 @@ except ImportError:
     import bottle.ext.sqlite
 
 from quenb.util import get_hash, generate_token
-from quenb import scheme
+from quenb import ParseRules
+from quenb.PluginLoader import importPlugins
+from pyparsing import ParseException
+
+PLUGIN_DIR = './plugins'
+STATIC_FILES = './static'
 
 def error(M):
     sys.stderr.write(str(M))
     sys.stderr.write("\n")
 
-def evaluate(expression, environment=None):
-    # Given a rule, and a set of information, does the rule fire or not.
-    # A rule is a scheme expression, which either returns a truthy value
-    # or a false value.
-    result, env = scheme.evaluate_string(expression, environment)
-    return result
 
-def get_location(geodb, addr):
-    # TODO Currently the geoip stuff only supports IPv4, which should
-    # change. Although, let's be honest, the IPv6 GeoIP databases are
-    # tiny, mostly because of tiny IPv6 deployment. :(
-
-    # Simple v4 detection
-    if '.' in addr:
-        # Convert v4 address to number
-        numbers = [int(i) for i in addr.split('.')]
-        integer_ip = 2**24 * numbers[0]
-        integer_ip += 2**16 * numbers[1]
-        integer_ip += 2**8 * numbers[2]
-        integer_ip += numbers[3]
-
-        with geodb:
-            cur = geodb.execute("""SELECT * FROM blocks, location WHERE
-                                ? BETWEEN blocks.start_ip AND blocks.end_ip
-                                AND blocks.loc_id = location.id""",
-                                (integer_ip,))
-            rows = list(cur)
-            if rows:
-                row = rows.pop()
-
-                city = row['city']
-                region = row['region']
-                country = row['country']
-
-                lat = row['latitude']
-                lon = row['longitude']
-
-                name = "{}, {}, {}".format(city, region, country)
-                loc = "{},{}".format(lat, lon)
-                return loc, name
-
-    return None, None
-
-STATIC_FILES = './static'
 app = bottle.Bottle()
+
+ruler = ParseRules.QuenbRuleParser()
 
 @app.get('/display')
 def get_display(db, geodb=None):
@@ -101,20 +65,10 @@ def get_display(db, geodb=None):
         except ValueError:
             addr = "<invalid-address>"
 
-    if geodb is not None:
-        if query.loc:
-            loc = tuple([query.loc.split(',')])
-            locname = None
-        else:
-            # Now based on that IP address
-            # look up their geographical location
-            loc, locname = get_location(geodb, addr)
-
     # Hopefully the client supplies a client id ("cid"), and then we
     # can easily look the client up. If not,
     # TODO we'll have to determine who the client is likely to be
     # based on the other information they've supplied.
-
     cid = query.cid
 
     # If they didn't include a version string, then version is the empty
@@ -130,8 +84,7 @@ def get_display(db, geodb=None):
         'cid': cid,
         'version': version,
         'addr': addr,
-        'loc': loc,
-        'locname': locname,
+        'location': query.location,
         'mac': query.mac,
         'calls': query.calls,
         'token': query.token,
@@ -140,25 +93,6 @@ def get_display(db, geodb=None):
 
     }
 
-    scheme_bodies = []
-    with db:
-        for code_tuple in db.execute("SELECT * FROM code"):
-            scheme_bodies.append(code_tuple['body'])
-
-    template_env = scheme.get_default_environment()
-
-    for item in client_info.items():
-        template_env.add_item(item)
-
-    for body in scheme_bodies:
-        try:
-            value = evaluate(body, template_env)
-        except scheme.SchemeException as e:
-            error("Error with code {},{}".format(body, e))
-            traceback.print_exc()
-
-    # the client_info is passed to the rules engine to determine
-    # if a rule's outcome will fire.
 
     if cid:
         with db:
@@ -181,19 +115,17 @@ def get_display(db, geodb=None):
             # the priority, it'll apply the outcomes LAST, and thus be
             # the set that is sent.
 
+            # Parse the rule and evaluate
             rule = ruletuple['rule']
-            if rule is not None:
-                # Copy a new environment
-                env = copy.deepcopy(template_env)
-                try:
-                    value = evaluate(rule, env)
-                except (scheme.SchemeException, Exception) as e:
-                    error("Error with rule {},{}".format(rule, client_info))
-                    value = False
-                    traceback.print_exc()
+            try:
+                result = ruler.evaluateRule(rule, client_info)
+            except ParseException as e:
+                error("Error parsing rule {},{}".format(rule, client_info))
+                traceback.print_exc()
 
-            if rule is not None and value:
-                # get outcome, evaluate it, and apply it to the response
+            # Rule matched: Load the outcome and apply it
+            if result:
+
                 outcome_id = ruletuple['outcome']
 
                 outcomes = db.execute("SELECT * FROM outcomes WHERE id=?",
@@ -203,23 +135,16 @@ def get_display(db, geodb=None):
                 if outcomes:
                     outcometuple = outcomes.pop()
 
-                    code = outcometuple['code']
-                    # Another new environment
-                    env = copy.deepcopy(template_env)
-                    try:
-                        result = evaluate(code, env)
-                        # The return value needs to be a list of (key,value)
-                        # pairs
-                        settings = dict(result)
+                    plugins = importPlugins(PLUGIN_DIR)
+                    from pprint import pformat
+                    print "Plugins loaded: "+pformat(plugins)
 
-                    except (scheme.SchemeException, Exception) as e:
-                        error("Error with outcome {},{},{}".format(code,
-                                                                client_info,
-                                                                  e))
-                        settings = {}
-                        traceback.print_exc()
-
-                    response.update(settings)
+                    module = outcometuple['module']
+                    function = outcometuple['function']
+                    if module in plugins:
+                        code = plugins[module]
+                        settings = code(args=outcometuple, variables=client_info)
+                        response.update(settings)
 
     return json.dumps(response)
 
@@ -387,28 +312,7 @@ def delete_api_rules(db, id=None):
         db.execute("DELETE FROM rules WHERE id=?", (id,))
     return json.dumps(None)
 
-@app.get('/api/code')
-def get_api_code(db):
-    auth_check(db)
-    L = database_dump(db, "code")
-    return json.dumps(L)
-
-@app.put('/api/code')
-@app.put('/api/code/<id>')
-def put_api_code(db, id=None):
-    auth_check(db)
-    database_update(db, "code", id, dict(bottle.request.forms),
-                    ['body','title', 'id'])
-    return json.dumps(None)
-
-@app.delete('/api/code/<id>')
-def delete_api_code(db, id=None):
-    auth_check(db)
-    with db:
-        db.execute("DELETE FROM code WHERE id=?", (id,))
-    return json.dumps(None)
-
-def setup(db_path="quenb.db", geodb_path=None):
+def setup(db_path="quenb.db"):
     db = sqlite3.connect(db_path)
     with db:
         db.execute("""CREATE TABLE IF NOT EXISTS clients
@@ -416,7 +320,9 @@ def setup(db_path="quenb.db", geodb_path=None):
                    last_heard TIMESTAMP)""")
         db.execute("""CREATE TABLE IF NOT EXISTS outcomes
                    (id INTEGER PRIMARY KEY,
-                   code TEXT,
+                   module TEXT,
+                   function TEXT,
+                   args TEXT,
                    title TEXT, description TEXT)""")
         db.execute("""CREATE TABLE IF NOT EXISTS rules
                    (id INTEGER PRIMARY KEY,
@@ -428,88 +334,41 @@ def setup(db_path="quenb.db", geodb_path=None):
                    salt TEXT NOT NULL,
                    hash TEXT NOT NULL,
                    hash_version INT NOT NULL)""")
-        db.execute("""CREATE TABLE IF NOT EXISTS code
-                   (id INTEGER PRIMARY KEY ASC,
-                   title TEXT,
-                   body TEXT)""")
 
         # TODO The default outcome is hit if there is no configuration
         # on the server, so make it something funny.
         db.execute("""INSERT OR IGNORE INTO outcomes
-                   (id, code)
-                   VALUES (0,
-                          '(quote (("display_url" "http://nyan.cat")))'
-                          )""")
+                   (id, module, function, args)
+                   VALUES (0, 'urls', 'openURL', 'http://nyan.cat')""")
 
         # There must always be a rule at the bottom. Well, I say there must
         # be.
         if not list(db.execute("SELECT * FROM rules")):
             db.execute("""INSERT OR IGNORE INTO rules
                           (priority, rule, outcome)
-                          VALUES (0, "#t", 0)""")
+                          VALUES (0, "true", 0)""")
 
-        if not list(db.execute("SELECT * FROM code")):
-            db.execute("""INSERT OR IGNORE INTO code
-                       (id, title, body)
-                       VALUES (0, "Example Code", '(define foo "bar")')""")
-
-        if not list(db.execute("SELECT * FROM users")):
-            db.execute("""INSERT OR IGNORE INTO users
-                       (username, salt, hash, hash_version)
-                       VALUES ("root", "", "root", 0)""")
+#        if not list(db.execute("SELECT * FROM code")):
+#            db.execute("""INSERT OR IGNORE INTO code
+#                       (id, title, body)
+#                       VALUES (0, "Example Code", '(define foo "bar")')""")
+#
+#        if not list(db.execute("SELECT * FROM users")):
+#            db.execute("""INSERT OR IGNORE INTO users
+#                       (username, salt, hash, hash_version)
+#                       VALUES ("root", "", "root", 0)""")
 
     plugin = bottle.ext.sqlite.Plugin(dbfile=db_path)
     global app
     app.install(plugin)
 
-    # The geodatabase takes a significant amount of time to create
-    # so we're not just doing every time the server starts. That's silly.
-    if geodb_path is not None:
-        plugin2 = bottle.ext.sqlite.Plugin(dbfile=geodb_path,keyword='geodb')
-        # Monkey patch plugins to have different names, so they both work
-        plugin2.name += "2"
-        app.install(plugin2)
-
-def create_geodb(geodb_path="geoip.db", geoip_folder='.'):
-    db = sqlite3.connect(geodb_path)
-    db.text_factory = str
-    with db:
-        db.execute("""CREATE TABLE blocks
-                   (start_ip INTEGER, end_ip INTEGER, loc_id INTEGER)""")
-        db.execute("""CREATE TABLE location
-                   (id INTEGER PRIMARY KEY, country TEXT, region TEXT,
-                   city TEXT, postcode TEXT, latitude TEXT, longitude TEXT,
-                   metrocode INTEGER, areacode INTEGER)""")
-
-        print("Importing Blocks")
-        path = os.path.join(geoip_folder, "GeoLiteCity-Blocks.csv")
-        with open(path) as f:
-            # Chop the first two lines off
-            f.readline()
-            f.readline()
-            for row in csv.reader(f):
-                db.execute("INSERT INTO blocks VALUES (?,?,?)", row)
-
-        print("Importing Location")
-        path = os.path.join(geoip_folder, "GeoLiteCity-Location.csv")
-        with open(path) as f:
-            f.readline()
-            f.readline()
-            for row in csv.reader(f):
-                db.execute("INSERT INTO location VALUES (?,?,?,?,?,?,?,?,?)",
-                           row)
-
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('-d','--debug',action='store_true')
     p.add_argument('--host',default='localhost')
-    p.add_argument('--make-geodb',default='')
 
     ns = p.parse_args()
-    if ns.make_geodb:
-        create_geodb(geoip_folder=ns.make_geodb)
-    else:
-        setup(db_path="quenb.db", geodb_path="geoip.db")
-        bottle.debug(ns.debug)
+    setup(db_path="quenb.db")
+    bottle.debug(ns.debug)
 
-        bottle.run(app, host=ns.host, port=25009)
+    bottle.run(app, host=ns.host, port=25009)
