@@ -1,0 +1,69 @@
+QuenB plugins
+=============
+
+Plugins are simple functions within modules that implement the code for rule outcomes.
+
+Rules are loaded from the database e.g.:
+
+  Rule: mac == '1234abcd5678'
+  Outcome: 23
+  Priority: 12
+
+The rules are processed in priority order and evaluated with the info we have about the client. When a rule matches,
+its outcome is loaded from the database e.g.:
+
+  Outcome ID: 23
+  Module: urls
+  Function: openURL
+  Args: http://www.example.org/something
+
+The plugin loader looks in the plugins directory for a suitable module. In this case
+there should be a 'urls.py' module in the plugins directory, with a function called 'openURL'.
+
+Plugin API
+==========
+
+Outcomes are executed as follows:
+
+  (client_code, updated_client_info) = function(args, client_info)
+
+Your plugin function should take a list (arguments from the database, split on spaces) and a dict of client info.
+It should return a 2-tuple:
+  client_code : a dictionary that will be returned to the client telling it what to do
+  updated_client_info : your plugin may modify the client info, e.g. to assign a client ID to a specific known MAC address or IP
+
+The updated client ID will be used when evaluating the next rule/outcome in the sequence. Example: client groups:
+
+Rule ID	| Priority	| Rule						| Outcome
+---------------------------------------------------------
+1		| 1			| mac == '1234abcd5678'		| 1
+2		| 1			| mac == 'abcd1234ffff'		| 1
+3		| 1			| ip == '192.168.1.2'		| 1
+4		| 2			| client_group == 'foyer' 	| 2
+
+
+Outcome ID	| module	| function	| args	| title	| description
+-------------------
+1			| change_details	| setGroup	| foyer								| foyer group	| Join the group of foyer display screens
+2			| urls				| openURL	| http://www.example.org/something	| company page	| Displays the corporate website 
+
+The setGroup() function simply changes or creates the client_group setting to 'foyer', with no client code.
+The openURL() function does not change the client info, but returns the client code:
+
+{'display_url' : 'http://www.example.org/something'}
+
+
+Examples of all the client side options your function can return:
+
+Key				| Value													| What?
+--------------------------------------------------------------------------------------------------------------
+display_url		| "http://www.example.com"								| Show a single page
+url_cycle		| ["http://www.example.com", "http://www.example.org"]	| Show a sequence of pages
+cycle_timeout	| 5000													| Display time for page cycles
+special_show	| "tvstatic"											| Show a special item client-side
+show_error		| "Everything is broken forever :-("					| Show error message at top of screen
+show_info		| "Server is not on fire for once"						| Show info message at top of screen
+
+The returned dictionary will be converted to JSON and returned to the client.
+
+

@@ -27,8 +27,8 @@ except ImportError:
     import bottle.ext.sqlite
 
 from quenb.util import get_hash, generate_token
-from quenb import ParseRules
-from quenb.PluginLoader import importPlugins
+from quenb import ParseRules, ClientResponse
+#from quenb.PluginLoader import importPlugins
 from pyparsing import ParseException
 
 PLUGIN_DIR = './plugins'
@@ -44,7 +44,7 @@ app = bottle.Bottle()
 ruler = ParseRules.QuenbRuleParser()
 
 @app.get('/display')
-def get_display(db, geodb=None):
+def get_display(db):
     query = bottle.request.query
     token = query.token
 
@@ -128,24 +128,15 @@ def get_display(db, geodb=None):
 
                 outcome_id = ruletuple['outcome']
 
-                outcomes = db.execute("SELECT * FROM outcomes WHERE id=?",
+                outcomes = db.execute("SELECT module, function, args FROM outcomes WHERE id=?",
                                       (outcome_id,))
                 outcomes = list(outcomes)
 
                 if outcomes:
                     outcometuple = outcomes.pop()
-
-                    plugins = importPlugins(PLUGIN_DIR)
-                    from pprint import pformat
-                    print "Plugins loaded: "+pformat(plugins)
-
-                    module = outcometuple['module']
-                    function = outcometuple['function']
-                    if module in plugins:
-                        code = plugins[module]
-                        settings = code(args=outcometuple, variables=client_info)
-                        response.update(settings)
-
+                    (module_name, function_name, function_args) = outcometuple
+                    (client_code, client_info) = ClientResponse.runOutcome(PLUGIN_DIR, module_name, function_name, function_args, client_info)
+                    response.update(client_code)
     return json.dumps(response)
 
 @app.get('/webclient')
@@ -339,7 +330,7 @@ def setup(db_path="quenb.db"):
         # on the server, so make it something funny.
         db.execute("""INSERT OR IGNORE INTO outcomes
                    (id, module, function, args)
-                   VALUES (0, 'urls', 'openURL', 'http://nyan.cat')""")
+                   VALUES (0, 'quenb-builtin', 'display_url', 'http://nyan.cat')""")
 
         # There must always be a rule at the bottom. Well, I say there must
         # be.
