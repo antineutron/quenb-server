@@ -28,7 +28,6 @@ except ImportError:
 
 from quenb.util import get_hash, generate_token
 from quenb import ParseRules, ClientResponse
-#from quenb.PluginLoader import importPlugins
 from pyparsing import ParseException
 
 PLUGIN_DIR = './plugins'
