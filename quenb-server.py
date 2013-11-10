@@ -3,8 +3,6 @@
 import json
 import random
 import string
-import hashlib
-import hmac
 import argparse
 import collections
 import sqlite3
@@ -18,20 +16,20 @@ import copy
 import time
 import traceback
 
-try:
-    import bottle
-    import bottle.ext.sqlite
-except ImportError:
-    sys.path.insert(0, './lib')
-    import bottle
-    import bottle.ext.sqlite
+import bottle
+import bottle.ext.sqlite
+from cork import Cork
+from cork.sqlite_backend import SQLiteBackend
+from beaker.middleware import SessionMiddleware
 
-from quenb.util import get_hash, generate_token
-from quenb import ParseRules, ClientResponse
+
+from quenb import ParseRules, ClientResponse, Authentication
 from pyparsing import ParseException
 
 PLUGIN_DIR = './plugins'
 STATIC_FILES = './static'
+USERDB_DIR = './userdb'
+DB_PATH = 'quenb.db'
 
 def error(M):
     sys.stderr.write(str(M))
@@ -39,8 +37,27 @@ def error(M):
 
 
 app = bottle.Bottle()
+plugin = bottle.ext.sqlite.Plugin(dbfile=DB_PATH)
+app.install(plugin)
+
+aaa = Authentication.getAAA(USERDB_DIR)
+
+session_opts = {
+    'session.cookie_expires': True,
+    'session.encrypt_key': 'please use a random key and keep it jksdgjksfgjkbsdfg secret!',
+    'session.httponly': True,
+    'session.timeout': 3600 * 24,  # 1 day
+    'session.type': 'cookie',
+    'session.validate_key': True,
+}
+app_sessioned = SessionMiddleware(app, session_opts)
 
 ruler = ParseRules.QuenbRuleParser()
+
+@app.get('/')
+@bottle.view('index')
+def get_index():
+    return {}
 
 @app.get('/display')
 def get_display(db):
@@ -142,7 +159,8 @@ def get_display(db):
 def get_webclient():
 
     d = {
-        'client_id': get_salt(n=16),
+        #TODO
+        'client_id': 'lolll',#get_salt(n=16),
         'addr': bottle.request.remote_addr,
     }
 
@@ -152,6 +170,19 @@ def get_webclient():
 
     return bottle.template('webclient', **d)
 
+@app.get('/admin')
+def get_admin():
+    aaa.require(role='admin', fail_redirect='/login')
+    return 'Welcome administrators'
+
+@app.get('/login')
+def login():
+    return "Login page"
+
+@app.get('/logout')
+def logout():
+    return "Logout page"
+
 @app.get('/favicon.ico')
 def get_favicon():
     return bottle.static_file('favicon.ico',root='.')
@@ -160,39 +191,6 @@ def get_favicon():
 def get_static(filename):
     return bottle.static_file(filename, root=STATIC_FILES)
 
-def auth_check(db):
-    if bottle.request.auth is None:
-        bottle.abort(401, "No credentials supplied.")
-
-    username, password = bottle.request.auth
-    for usertuple in db.execute("SELECT * FROM users WHERE username=?",
-                                (username,)):
-        salt, hash_version = usertuple['salt'], usertuple['hash_version']
-        if usertuple['hash'] == hash_password(password, salt, hash_version):
-            return True
-
-    bottle.abort(401, "Bad credentials.")
-
-def hash_password(password='',salt='',hash_version=1):
-    if hash_version == 0:
-        # plaintext
-        return password
-
-    elif hash_version == 1:
-        hash = hashlib.sha512(password + salt).digest()
-        for i in range(1000):
-            hash = hashlib.sha512(hash + salt).digest()
-        return hash
-    else:
-        raise Exception("Hash version not recognised.")
-
-def get_salt(n=10):
-    # Generate random hexstring
-    hexstring = ''
-    r = random.SystemRandom()
-    for i in range(n):
-        hexstring += r.choice('1234567890abcedef')
-    return hexstring
 
 
 @app.get('/api/ping')
@@ -348,9 +346,6 @@ def setup(db_path="quenb.db"):
 #                       (username, salt, hash, hash_version)
 #                       VALUES ("root", "", "root", 0)""")
 
-    plugin = bottle.ext.sqlite.Plugin(dbfile=db_path)
-    global app
-    app.install(plugin)
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
@@ -358,7 +353,7 @@ if __name__ == '__main__':
     p.add_argument('--host',default='localhost')
 
     ns = p.parse_args()
-    setup(db_path="quenb.db")
+    setup(db_path=DB_PATH)
     bottle.debug(ns.debug)
 
-    bottle.run(app, host=ns.host, port=25009)
+    bottle.run(app_sessioned, host=ns.host, port=25009)
