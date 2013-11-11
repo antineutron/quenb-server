@@ -15,6 +15,7 @@ import operator
 import copy
 import time
 import traceback
+import socket
 
 import bottle
 import bottle.ext.sqlite
@@ -23,14 +24,10 @@ from cork.sqlite_backend import SQLiteBackend
 from beaker.middleware import SessionMiddleware
 
 
-from quenb import ParseRules, ClientResponse, Authentication
+from quenb import ParseRules, ClientResponse, Authentication, ClientDatabase
 from pyparsing import ParseException
 from settings import *
 
-#PLUGIN_DIR = './plugins'
-#STATIC_FILES = './static'
-#USERDB_DIR = './userdb'
-#DB_PATH = 'quenb.db'
 
 def error(M):
     sys.stderr.write(str(M))
@@ -78,14 +75,20 @@ def get_display(db):
     # This is deliberate, as it allows for debugging.
     addr = query.addr or bottle.request.remote_addr
 
+    # Attempt to resolve hostname, default to IP
+    try:
+        hostname = socket.gethostbyaddr(addr)[0]
+    except:
+        hostname = addr
+
     # Probably needs some verification it's a legit v4 or v6 address
-    if ':' in addr:
-        addr = addr.split(':')
-    else:
-        try:
-            addr = [int(x) for x in addr.split('.')]
-        except ValueError:
-            addr = "<invalid-address>"
+#    if ':' in addr:
+#        addr = addr.split(':')
+#    else:
+#        try:
+#            addr = [int(x) for x in addr.split('.')]
+#        except ValueError:
+#            addr = "<invalid-address>"
 
     # Hopefully the client supplies a client id ("cid"), and then we
     # can easily look the client up. If not,
@@ -119,8 +122,8 @@ def get_display(db):
     if cid:
         with db:
             # Insert a entry into the database
-            db.execute("INSERT OR IGNORE INTO clients (cid) VALUES (?)",
-                       (cid,))
+            db.execute("INSERT OR IGNORE INTO clients (cid, ip, hostname) VALUES (?, ?, ?)",
+                       (cid,addr,hostname))
             # Then update the timestamp from when we last heard them.
             db.execute("UPDATE clients SET last_heard = ? WHERE cid = ?",
                        (datetime.datetime.now(), cid))
@@ -179,11 +182,13 @@ def get_webclient():
     return d
 
 
-@app.get('/admin')
-@bottle.view('admin')
 @authorize(role="admin")
-def get_admin():
-    return {}
+#@bottle.view('admin') # Doesn't work :-(
+@app.get('/admin', template='admin')
+def get_admin(db):
+    return {
+        'clients' : ClientDatabase.getClients(db),
+    }
 
 @app.post('/login')
 def login():
@@ -193,7 +198,7 @@ def login():
 
 @app.post('/logout')
 def logout():
-    return "Logout page"
+    aaa.logout(success_redirect='/', fail_redirect='/admin')
 
 @app.get('/favicon.ico')
 def get_favicon():
@@ -317,6 +322,8 @@ def setup(db_path="quenb.db"):
     with db:
         db.execute("""CREATE TABLE IF NOT EXISTS clients
                    (cid TEXT PRIMARY KEY,
+                   ip TEXT,
+                   hostname TEXT,
                    last_heard TIMESTAMP)""")
         db.execute("""CREATE TABLE IF NOT EXISTS outcomes
                    (id INTEGER PRIMARY KEY,

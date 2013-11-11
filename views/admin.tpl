@@ -16,14 +16,9 @@
           <a class="navbar-brand" href="#">QuenB Signage System</a>
         </div>
         <div class="navbar-collapse collapse">
-          <form class="navbar-form navbar-right">
-            <div class="form-group">
-              <input type="text" placeholder="Username" class="form-control">
-            </div>
-            <div class="form-group">
-              <input type="password" placeholder="Password" class="form-control">
-            </div>
-            <button type="submit" class="btn btn-success">Sign in</button>
+		  
+          <form class="navbar-form navbar-right" method="POST" action="/logout">
+            <button type="submit" class="btn btn-success">Sign out</button>
           </form>
         </div><!--/.navbar-collapse -->
       </div>
@@ -36,7 +31,25 @@
       </div>
     </div>
  
-    <div>
+    <div class="center">
+	  <h2>Recently-seen client displays</h2>
+	  <table>
+	    <tr><th>Client ID</th><th>Hostname</th><th>IP</th><th>MAC</th><th>Actions</th></tr>
+
+	    % for client in clients:
+		<tr>
+		  <td>{{client.get('cid')}}</td>
+		  <td>{{client.get('hostname')}}</td>
+		  <td>{{client.get('ip')}}</td>
+		  <td>{{client.get('mac')}}</td>
+		  <td>
+		    Restart client
+			Block client
+			Create client rule
+		  </td>
+		</tr>
+		% end
+	  </table>
     </div>
  
     <footer>
