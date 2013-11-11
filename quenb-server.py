@@ -25,11 +25,12 @@ from beaker.middleware import SessionMiddleware
 
 from quenb import ParseRules, ClientResponse, Authentication
 from pyparsing import ParseException
+from settings import *
 
-PLUGIN_DIR = './plugins'
-STATIC_FILES = './static'
-USERDB_DIR = './userdb'
-DB_PATH = 'quenb.db'
+#PLUGIN_DIR = './plugins'
+#STATIC_FILES = './static'
+#USERDB_DIR = './userdb'
+#DB_PATH = 'quenb.db'
 
 def error(M):
     sys.stderr.write(str(M))
@@ -52,7 +53,12 @@ session_opts = {
 }
 app_sessioned = SessionMiddleware(app, session_opts)
 
+authorize = aaa.make_auth_decorator(fail_redirect="/", role="user")
+
 ruler = ParseRules.QuenbRuleParser()
+
+def post_get(name, default=''):
+    return bottle.request.POST.get(name, default).strip()
 
 @app.get('/')
 @bottle.view('index')
@@ -156,6 +162,7 @@ def get_display(db):
     return json.dumps(response)
 
 @app.get('/webclient')
+@bottle.view('webclient')
 def get_webclient():
 
     d = {
@@ -168,18 +175,23 @@ def get_webclient():
 
     d['query_variables'] = dict(query)
 
-    return bottle.template('webclient', **d)
+    #return bottle.template('webclient', **d)
+    return d
+
 
 @app.get('/admin')
+@bottle.view('admin')
+@authorize(role="admin")
 def get_admin():
-    aaa.require(role='admin', fail_redirect='/login')
-    return 'Welcome administrators'
+    return {}
 
-@app.get('/login')
+@app.post('/login')
 def login():
-    return "Login page"
+    username = post_get('username')
+    password = post_get('password')
+    aaa.login(username, password, success_redirect='/admin', fail_redirect='/')
 
-@app.get('/logout')
+@app.post('/logout')
 def logout():
     return "Logout page"
 
