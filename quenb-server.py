@@ -54,14 +54,58 @@ authorize = aaa.make_auth_decorator(fail_redirect="/", role="user")
 
 ruler = ParseRules.QuenbRuleParser()
 
+
 def post_get(name, default=''):
     return bottle.request.POST.get(name, default).strip()
 
+# Index page, just shows some pretty stuff telling you to log in
 @app.get('/')
 @bottle.view('index')
 def get_index():
     return {}
 
+
+# This returns the webclient page, which is where the signage displays start.
+# The page loads some Javascript to poll the server asking it what to display, etc.
+@app.get('/webclient', template='webclient')
+def get_webclient():
+
+    session = bottle.request.environ['beaker.session']
+
+    # If the client has supplied a client ID, e.g. for debugging,
+    # use that as the first priority
+    if 'client_id' in bottle.request:
+        cid = bottle.request.client_id
+
+    # Otherwise, if there is a client ID in the session data,
+    # use that...
+    elif 'client_id' in session:
+        cid = session.get('client_id')
+        print "SES CID: "+cid
+
+    # Failing all else, generate a random client ID as a 30-digit hex string
+    # and store it in the session.
+    else:
+        cid = '{0:030x}'.format(random.randrange(16**30))
+
+    # Make sure we store the client ID in the session between requests.
+    session['client_id'] = cid
+
+    session.save()
+
+    d = {
+        #TODO
+        'client_id': cid,
+        'addr': bottle.request.remote_addr,
+    }
+
+    query = bottle.request.query
+
+    d['query_variables'] = dict(query)
+
+    return d
+
+# This is called via AJAX from the webclient, it returns client instructions/data
 @app.get('/display')
 def get_display(db):
     query = bottle.request.query
@@ -165,24 +209,7 @@ def get_display(db):
                     response.update(client_code)
     return json.dumps(response)
 
-@app.get('/webclient')
-@bottle.view('webclient')
-def get_webclient():
 
-    import random
-    cid = '{0:030x}'.format(random.randrange(16**30))
-    d = {
-        #TODO
-        'client_id': cid,
-        'addr': bottle.request.remote_addr,
-    }
-
-    query = bottle.request.query
-
-    d['query_variables'] = dict(query)
-
-    #return bottle.template('webclient', **d)
-    return d
 
 
 @authorize(role="admin")
@@ -192,6 +219,21 @@ def get_admin(db):
         'clients' : ClientDatabase.getClients(db),
     }
 
+@app.get('/admin/rules', template='admin_rules')
+def get_admin_rules(db):
+    return {}
+    
+@app.get('/admin/rules/add', template='admin_rule')
+def get_admin_add_rule(db):
+    return {}
+
+@app.get('/admin/rules/edit/:rule_id', template='admin_rule')
+def get_admin_edit_rule(db, rule_id):
+    return {}
+    
+@app.get('/admin/rules/add', template='admin_delete_rule')
+def get_admin_delete_rule(db):
+    return {}
 
 @app.post('/login')
 def login():

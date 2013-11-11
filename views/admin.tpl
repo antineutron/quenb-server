@@ -13,10 +13,14 @@
           <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
             <span class="sr-only">Toggle navigation</span>
           </button>
-          <a class="navbar-brand" href="#">QuenB Signage System</a>
+          <a class="navbar-brand" href="#">QuenB Admin</a>
         </div>
         <div class="navbar-collapse collapse">
-		  
+		  <ul class="nav navbar-nav">
+            <li class="active"><a href="/admin/rules">Rules</a></li>
+            <li class="active"><a href="/admin/outcomes">Outcomes</a></li>
+            <li><a href="/about">About</a></li>
+          </ul>
           <form class="navbar-form navbar-right" method="POST" action="/logout">
             <button type="submit" class="btn btn-success">Sign out</button>
           </form>
