@@ -75,11 +75,6 @@ def get_display(db):
     # This is deliberate, as it allows for debugging.
     addr = query.addr or bottle.request.remote_addr
 
-    # Attempt to resolve hostname, default to IP
-    try:
-        hostname = socket.gethostbyaddr(addr)[0]
-    except:
-        hostname = addr
 
     # Probably needs some verification it's a legit v4 or v6 address
 #    if ':' in addr:
@@ -89,6 +84,12 @@ def get_display(db):
 #            addr = [int(x) for x in addr.split('.')]
 #        except ValueError:
 #            addr = "<invalid-address>"
+
+    # Attempt to resolve hostname, default to IP
+    try:
+        hostname = socket.gethostbyaddr(addr)[0]
+    except:
+        hostname = addr
 
     # Hopefully the client supplies a client id ("cid"), and then we
     # can easily look the client up. If not,
@@ -106,13 +107,13 @@ def get_display(db):
                now.second, now.microsecond]
 
     client_info = {
-        'cid': cid,
-        'version': version,
-        'addr': addr,
+        'cid':      cid,
+        'version':  version,
+        'addr':     addr,
         'location': query.location,
-        'mac': query.mac,
-        'calls': query.calls,
-        'token': query.token,
+        'mac':      query.mac,
+        'calls':    query.calls,
+        'token':    query.token,
         'datetime': dt_list,
         'unixtime': time.mktime(now.timetuple())
 
@@ -168,9 +169,11 @@ def get_display(db):
 @bottle.view('webclient')
 def get_webclient():
 
+    import random
+    cid = '{0:030x}'.format(random.randrange(16**30))
     d = {
         #TODO
-        'client_id': 'lolll',#get_salt(n=16),
+        'client_id': cid,
         'addr': bottle.request.remote_addr,
     }
 
@@ -183,12 +186,12 @@ def get_webclient():
 
 
 @authorize(role="admin")
-#@bottle.view('admin') # Doesn't work :-(
 @app.get('/admin', template='admin')
 def get_admin(db):
     return {
         'clients' : ClientDatabase.getClients(db),
     }
+
 
 @app.post('/login')
 def login():
