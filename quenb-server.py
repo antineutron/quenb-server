@@ -70,7 +70,6 @@ def setup(db_path="quenb.db"):
         RulesDatabase.setup(db)
         ClientDatabase.setup(db)
 
-
 ### Static file handlers ###
 
 @app.get('/favicon.ico')
@@ -157,7 +156,7 @@ def get_display(db):
 
         # Rule matched: Load the action and apply it
         if result:
-            (client_code, client_info) = ClientResponse.runOutcome(PLUGIN_DIR, rule['module'], rule['function'], rule['args'], client_info)
+            (client_code, client_info) = ClientResponse.runAction(PLUGIN_DIR, rule['module'], rule['function'], rule['args'], bottle.request, client_info)
 
             response.update(client_code)
 

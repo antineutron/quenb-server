@@ -5,11 +5,11 @@ import types
 
 
 
-def runOutcome(plugin_dir, module_name, function_name, function_args, client_info):
+def runAction(plugin_dir, module_name, function_name, function_args, request, client_info):
     """
-    Once we've matched a rule for a client and loaded its outcome,
-    load the corresponding plugin (if possible) and run the outcome
-    function. We will pass it the arguments defined in the outcome
+    Once we've matched a rule for a client and loaded its action,
+    load the corresponding plugin (if possible) and run the action
+    function. We will pass it the arguments defined in the action
     and also the dict of info we have about the client.
     """
 
@@ -35,9 +35,9 @@ def runOutcome(plugin_dir, module_name, function_name, function_args, client_inf
         print "Function {} exists but is not a function! ({})".format(function_name, type(function))
         return False
     
-    print "Run function: {} with args: {} and info: {}".format(function, function_args, client_info)
+    print "Run function: {} with args: {} request: {} and info: {}".format(function, function_args, request, client_info)
 
-    response = function(function_args, client_info=client_info)
+    response = function(function_args, request, client_info)
 
     return response
     
