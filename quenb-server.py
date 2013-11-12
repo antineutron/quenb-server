@@ -56,8 +56,6 @@ ruler = ParseRules.QuenbRuleParser()
 
 ### Helpers ###
 
-
-
 def error(M):
     """
     Just prints an error.
@@ -80,6 +78,10 @@ def setup(db_path="quenb.db"):
     with db:
         RulesDatabase.setup(db)
         ClientDatabase.setup(db)
+
+
+
+### Browser-rendered pages ###
 
 
 # Index page, just shows some pretty stuff telling you to log in
@@ -117,17 +119,12 @@ def get_webclient():
 
     session.save()
 
-    d = {
-        #TODO
-        'client_id': cid,
-        'addr': bottle.request.remote_addr,
+    return {
+        'client_id'       : cid,
+        'addr'            : bottle.request.remote_addr,
+        'query_variables' : dict(bottle.request.query),
     }
 
-    query = bottle.request.query
-
-    d['query_variables'] = dict(query)
-
-    return d
 
 
 # This is called via AJAX from the webclient, it returns client instructions/data
@@ -143,16 +140,6 @@ def get_display(db):
     # use the one we've detected.
     # This is deliberate, as it allows for debugging.
     addr = query.addr or bottle.request.remote_addr
-
-
-    # Probably needs some verification it's a legit v4 or v6 address
-#    if ':' in addr:
-#        addr = addr.split(':')
-#    else:
-#        try:
-#            addr = [int(x) for x in addr.split('.')]
-#        except ValueError:
-#            addr = "<invalid-address>"
 
     # Attempt to resolve hostname, default to IP
     try:
@@ -189,53 +176,38 @@ def get_display(db):
         'token':    query.token,
         'datetime': dt_list,
         'unixtime': time.mktime(now.timetuple())
-
     }
 
 
     if cid:
-        with db:
-            # Insert a entry into the database
-            db.execute("INSERT OR IGNORE INTO clients (cid, ip, hostname) VALUES (?, ?, ?)",
-                       (cid,addr,hostname))
-            # Then update the timestamp from when we last heard them.
-            db.execute("UPDATE clients SET last_heard = ? WHERE cid = ?",
-                       (datetime.datetime.now(), cid))
+        ClientDatabase.updateClient(db, cid, addr, hostname)
 
     response = {}
 
-    with db:
-        for ruletuple in db.execute("""SELECT * FROM rules
-                                    ORDER BY priority ASC"""):
-            # For each rule determine if it fires/applies
-            # if so, then those actions are applied to the output
+    for rule in RulesDatabase.getRules(db):
+        
+        # For each rule determine if it fires/applies
+        # if so, then those actions are applied to the output
 
-            # the rules are done from lowest to highest, so the higher
-            # the priority, it'll apply the actions LAST, and thus be
-            # the set that is sent.
+        # the rules are done from lowest to highest, so the higher
+        # the priority, it'll apply the actions LAST, and thus be
+        # the set that is sent.
 
-            # Parse the rule and evaluate
-            rule = ruletuple['rule']
-            try:
-                result = ruler.evaluateRule(rule, client_info)
-            except ParseException as e:
-                error("Error parsing rule {},{}".format(rule, client_info))
-                traceback.print_exc()
+        # Parse the rule and evaluate
+        rule_text = rule['rule']
+        try:
+            result = ruler.evaluateRule(rule_text, client_info)
+        except ParseException as e:
+            error("Error parsing rule {},{}".format(rule_text, client_info))
+            traceback.print_exc()
+            continue
 
-            # Rule matched: Load the action and apply it
-            if result:
+        # Rule matched: Load the action and apply it
+        if result:
+            (client_code, client_info) = ClientResponse.runOutcome(PLUGIN_DIR, rule['module'], rule['function'], rule['args'], client_info)
 
-                action_id = ruletuple['action']
+            response.update(client_code)
 
-                actions = db.execute("SELECT module, function, args FROM actions WHERE id=?",
-                                      (action_id,))
-                actions = list(actions)
-
-                if actions:
-                    actiontuple = actions.pop()
-                    (module_name, function_name, function_args) = actiontuple
-                    (client_code, client_info) = ClientResponse.runOutcome(PLUGIN_DIR, module_name, function_name, function_args, client_info)
-                    response.update(client_code)
     return json.dumps(response)
 
 
