@@ -35,9 +35,7 @@ def runAction(plugin_dir, module_name, function_name, function_args, request, cl
         print "Function {} exists but is not a function! ({})".format(function_name, type(function))
         return False
     
-    print "Run function: {} with args: {} request: {} and info: {}".format(function, function_args, request, client_info)
-
-    response = function(function_args, request, client_info)
+    response = function(function_args, request=request, client_info=client_info)
 
     return response
     

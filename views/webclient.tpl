@@ -65,6 +65,10 @@ var client_query = {
 
 </head>
 <body>
+    <!-- Special item e.g. to display when things go wrong -->
     <img id="tvstatic" class="bg hidden special" src="/static/tvstatic.gif">
+
+	<!-- As above, but we can use this to display an arbitrary image fullscreen -->
+    <img id="imgfullscreen" class="bg hidden" src="/static/tvstatic.gif">
 </body>
 </html>

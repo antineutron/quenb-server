@@ -111,10 +111,15 @@ function looplet2(data, internal_data) {
     }
 
     $('.special').addClass('hidden');
+    $('#imgfullscreen').addClass('hidden');
 
     if (data.special_show) {
         $('.special#' + data.special_show).removeClass('hidden');
+    } else if (data.display_image){
+        $('#imgfullscreen').attr('src', data.display_image);
+        $('#imgfullscreen').removeClass('hidden');
     }
+
 
     var sent_display_url = data.display_url;
     var force_refresh = data.force_refresh;

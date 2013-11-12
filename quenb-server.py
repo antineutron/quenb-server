@@ -157,7 +157,6 @@ def get_display(db):
         # Rule matched: Load the action and apply it
         if result:
             (client_code, client_info) = ClientResponse.runAction(PLUGIN_DIR, rule['module'], rule['function'], rule['args'], bottle.request, client_info)
-
             response.update(client_code)
 
     return json.dumps(response)
