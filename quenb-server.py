@@ -80,13 +80,21 @@ def setup(db_path="quenb.db"):
         ClientDatabase.setup(db)
 
 
+### Static file handlers ###
+
+@app.get('/favicon.ico')
+def get_favicon():
+    return bottle.static_file('favicon.ico',root='.')
+
+@app.get('/static/<filename:path>')
+def get_static(filename):
+    return bottle.static_file(filename, root=STATIC_FILES)
+
 
 ### Browser-rendered pages ###
 
-
 # Index page, just shows some pretty stuff telling you to log in
-@app.get('/')
-@bottle.view('index')
+@app.get('/', template='index')
 def get_index():
     return {}
 
@@ -94,29 +102,11 @@ def get_index():
 # This returns the webclient page, which is where the signage displays start.
 # The page loads some Javascript to poll the server asking it what to display, etc.
 @app.get('/webclient', template='webclient')
-def get_webclient():
+def get_webclient(db):
 
+    # Get (or create) the client ID
     session = bottle.request.environ['beaker.session']
-
-    # If the client has supplied a client ID, e.g. for debugging,
-    # use that as the first priority
-    if 'client_id' in bottle.request:
-        cid = bottle.request.client_id
-
-    # Otherwise, if there is a client ID in the session data,
-    # use that...
-    elif 'client_id' in session:
-        cid = session.get('client_id')
-        print "SES CID: "+cid
-
-    # Failing all else, generate a random client ID as a 30-digit hex string
-    # and store it in the session.
-    else:
-        cid = '{0:030x}'.format(random.randrange(16**30))
-
-    # Make sure we store the client ID in the session between requests.
-    session['client_id'] = cid
-
+    (cid, addr, hostname, mac, version) = ClientDatabase.getClientDetails(db, bottle.request, session, bottle.request.query)
     session.save()
 
     return {
@@ -130,36 +120,11 @@ def get_webclient():
 # This is called via AJAX from the webclient, it returns client instructions/data
 @app.get('/display')
 def get_display(db):
-    query = bottle.request.query
-    token = query.token
 
-    # Determine which client is contacting us, and if we can
-    # determine what they have been configured to display
-
-    # If they specify an IP address then use that, if not, then
-    # use the one we've detected.
-    # This is deliberate, as it allows for debugging.
-    addr = query.addr or bottle.request.remote_addr
-
-    # Attempt to resolve hostname, default to IP
-    try:
-        hostname = socket.gethostbyaddr(addr)[0]
-    except:
-        hostname = addr
-
-    # Hopefully the client supplies a client id ("cid"), and then we
-    # can easily look the client up. If not,
-    # TODO we'll have to determine who the client is likely to be
-    # based on the other information they've supplied.
-    cid = query.cid
-
-    # MAC address: remove all but hex chars and lowercase-ify it for matching
-    mac = query.mac.lower()
-    mac = re.sub(r'[^a-z0-9]', '', mac)
-
-    # If they didn't include a version string, then version is the empty
-    # list, otherwise it should be a [NAME, MAJOR, MINOR, PATCH] list
-    version = query.version.split(',')
+    # Get the client's details
+    session = bottle.request.environ['beaker.session']
+    (cid, addr, hostname, mac, version) = ClientDatabase.getClientDetails(db, bottle.request, session, bottle.request.query)
+    session.save()
 
     # Get datetime as a list of numbers
     now = datetime.datetime.now()
@@ -170,17 +135,14 @@ def get_display(db):
         'cid':      cid,
         'version':  version,
         'addr':     addr,
-        'location': query.location,
+        'location': bottle.request.query.location,
         'mac':      mac,
-        'calls':    query.calls,
-        'token':    query.token,
+        'calls':    bottle.request.query.calls,
         'datetime': dt_list,
         'unixtime': time.mktime(now.timetuple())
     }
 
 
-    if cid:
-        ClientDatabase.updateClient(db, cid, addr, hostname)
 
     response = {}
 
@@ -213,33 +175,7 @@ def get_display(db):
 
 
 
-@authorize(role="admin")
-@app.get('/admin', template='admin')
-def get_admin(db):
-    return {
-        'clients' : ClientDatabase.getClients(db),
-    }
-
-@app.get('/admin/rules', template='rules')
-def get_admin_rules(db):
-    from pprint import pprint
-    pprint(RulesDatabase.getRules(db))
-    return {
-      'rules' : RulesDatabase.getRules(db),
-    }
-    
-@app.get('/admin/rules/add', template='add_rule')
-def get_admin_add_rule(db):
-    return {}
-
-@app.get('/admin/rules/edit/:rule_id', template='admin_rule')
-def get_admin_edit_rule(db, rule_id):
-    return {}
-    
-@app.get('/admin/rules/delete', template='admin_delete_rule')
-def get_admin_delete_rule(db):
-    return {}
-
+### Authentication pages ###
 @app.post('/login')
 def login():
     username = post_get('username')
@@ -250,13 +186,51 @@ def login():
 def logout():
     aaa.logout(success_redirect='/', fail_redirect='/admin')
 
-@app.get('/favicon.ico')
-def get_favicon():
-    return bottle.static_file('favicon.ico',root='.')
 
-@app.get('/static/<filename:path>')
-def get_static(filename):
-    return bottle.static_file(filename, root=STATIC_FILES)
+
+
+
+### Admin pages ###
+
+@authorize(role="admin")
+@app.get('/admin', template='admin')
+def get_admin(db):
+    """
+    Admin page - by default, just lists the currently connected clients.
+    """
+    return {
+        'clients' : ClientDatabase.getClients(db),
+    }
+
+
+@authorize(role="admin")
+@app.get('/admin/rules', template='rules')
+def get_admin_rules(db):
+    """
+    Rules admin page - lists the existing rules so the administrator can
+    edit/delete them, and provides a link to add a new rule
+    """
+    from pprint import pprint
+    pprint(RulesDatabase.getRules(db))
+    return {
+      'rules' : RulesDatabase.getRules(db),
+    }
+    
+@authorize(role="admin")
+@app.get('/admin/rules/add', template='add_rule')
+def get_admin_add_rule(db):
+    return {}
+
+@authorize(role="admin")
+@app.get('/admin/rules/edit/:rule_id', template='admin_rule')
+def get_admin_edit_rule(db, rule_id):
+    return {}
+    
+@authorize(role="admin")
+@app.get('/admin/rules/delete:rule_id', template='admin_delete_rule')
+def get_admin_delete_rule(db):
+    return {}
+
 
 
 

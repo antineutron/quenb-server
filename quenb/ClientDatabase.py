@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from datetime import datetime, timedelta
+import re
 
 def setup(db):
     """
@@ -12,8 +13,67 @@ def setup(db):
                hostname TEXT,
                last_heard TIMESTAMP)""")
 
+def getClientDetails(db, request, session, query):
+    """
+    Returns a tuple of client info: (client ID, IP, hostname, MAC address)
 
-def updateClient(db, cid, addr, hostname):
+    Gets the client ID, checking for one supplied by the client, then
+    one stored in the session, or as a last resort creating one.
+    Stores the ID in the session when it's done.
+    Gets the client's IP from the request, but may be overridden
+    by the client for e.g. debugging purposes.
+    The hostname is looked up from the IP, and the MAC address 
+    can only be supplied by the client.
+
+    Will auto-update the client DB with 'last seen' info.
+    """
+
+    # If the client has supplied a client ID, e.g. for debugging,
+    # use that as the first priority
+    if 'client_id' in request:
+        cid = request.client_id
+    elif 'cid' in request:
+        cid = request.cid
+
+    # Otherwise, if there is a client ID in the session data,
+    # use that...
+    elif 'client_id' in session:
+        cid = session.get('client_id')
+        print "SES CID: "+cid
+
+    # Failing all else, generate a random client ID as a 30-digit hex string
+    # and store it in the session.
+    else:
+        cid = '{0:030x}'.format(random.randrange(16**30))
+
+    # Make sure we store the client ID in the session between requests.
+    session['client_id'] = cid
+
+    # If they specify an IP address then use that, if not, then
+    # use the one we've detected.
+    # This is deliberate, as it allows for debugging.
+    addr = query.addr or request.remote_addr
+
+    # Attempt to resolve hostname, default to IP
+    try:
+        hostname = socket.gethostbyaddr(addr)[0]
+    except:
+        hostname = addr
+
+    # MAC address: remove all but hex chars and lowercase-ify it for matching
+    mac = query.mac.lower()
+    mac = re.sub(r'[^a-z0-9]', '', mac)
+
+    # If they didn't include a version string, then version is the empty
+    # list, otherwise it should be a [NAME, MAJOR, MINOR, PATCH] list
+    version = query.version.split(',')
+
+    # Automatically update the client database so we know when they were last seen
+    updateClient(db, cid, addr, hostname, mac, version)
+
+    return (cid, addr, hostname, mac, version)
+
+def updateClient(db, cid, addr, hostname, mac, version):
     with db:
         # Insert a entry into the database
         db.execute("INSERT OR IGNORE INTO clients (cid, ip, hostname) VALUES (?, ?, ?)",
