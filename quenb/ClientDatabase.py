@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from datetime import datetime, timedelta
-import re
+import re, random
 
 def setup(db):
     """
@@ -39,7 +39,6 @@ def getClientDetails(db, request, session, query):
     # use that...
     elif 'client_id' in session:
         cid = session.get('client_id')
-        print "SES CID: "+cid
 
     # Failing all else, generate a random client ID as a 30-digit hex string
     # and store it in the session.

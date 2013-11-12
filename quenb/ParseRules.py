@@ -196,14 +196,11 @@ class QuenbRuleParser:
         if rule == None:
             return false
 
+        rule = rule.strip()
         # Fudge factor 0.5 - really need TODO fix parser to generate AST node for true/false...
-        print type(rule)
         if (rule.lower() == 'true' or rule.lower() == 'false'):
-            print "lol: rule is boolean "+str(rule)
             return bool(rule)
 
-        print "Eval {} : {}".format(rule, variables)
-        print "Parsed: {}".format(self.expression.parseString(rule))
         return self.expression.parseString(rule)[0].evaluate(variables)
     
     
