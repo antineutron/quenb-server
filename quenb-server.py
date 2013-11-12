@@ -199,8 +199,6 @@ def get_admin_rules(db):
     Rules admin page - lists the existing rules so the administrator can
     edit/delete them, and provides a link to add a new rule
     """
-    from pprint import pprint
-    pprint(RulesDatabase.getRules(db))
     return {
       'rules' : RulesDatabase.getRules(db),
     }
