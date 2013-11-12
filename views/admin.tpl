@@ -18,7 +18,7 @@
         <div class="navbar-collapse collapse">
 		  <ul class="nav navbar-nav">
             <li class="active"><a href="/admin/rules">Rules</a></li>
-            <li class="active"><a href="/admin/outcomes">Outcomes</a></li>
+            <li class="active"><a href="/admin/actions">Actions</a></li>
             <li><a href="/about">About</a></li>
           </ul>
           <form class="navbar-form navbar-right" method="POST" action="/logout">
