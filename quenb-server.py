@@ -1,22 +1,13 @@
 #!/usr/bin/env python
 
 import json
-import random
-import string
 import argparse
-import collections
 import sqlite3
 import datetime
-import os
-import os.path
-import csv
 import sys
 import operator
-import copy
 import time
 import traceback
-import socket
-import re
 
 import bottle
 import bottle.ext.sqlite
