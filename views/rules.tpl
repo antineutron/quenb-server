@@ -6,8 +6,11 @@
         This is the current list of rules in the database:
       </p>
 
-      <table class="table table-striped table-bordered table-condensed">
-        <tr><th>Priority</th><th>Rule</th><th>Action</th></tr>
+      <table id='ruleTable'>
+	    <thead>
+          <tr><th>Priority</th><th>Rule</th><th>Action</th></tr>
+		</thead>
+		<tbody>
         % for rule in rules:
         <tr>
           <td>
@@ -16,9 +19,13 @@
             {{rule['priority']}}
           </td>
           <td>{{rule['rule']}}</td>
-          <td>{{rule['title']}} - Calls: {{rule['module']}}.{{rule['function']}}({{rule['args']}})</td>
+          <td>{{rule['title']}} - Calls: {{rule['module']}}.{{rule['function']}}({{rule['args'] or ''}})</td>
         </tr>
+		</tbody>
         % end for
+	    <tfoot>
+          <tr><th>Priority</th><th>Rule</th><th>Action</th></tr>
+		</tfoot>
       </table>
 
       <script>
@@ -36,7 +43,9 @@
           text: false
 		});
 		});
-
+        $(document).ready(function() {
+            var oTable = $('#ruleTable').dataTable();
+        } );
       </script>
 
 

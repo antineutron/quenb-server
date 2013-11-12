@@ -1,11 +1,14 @@
 <html>
   <head><title>QuenB admin interface</title></head>
   <body>
-    <script src='http://code.jquery.com/jquery-1.9.1.js'></script>
-    <script src='http://code.jquery.com/ui/1.10.3/jquery-ui.js'></script>
-    <link rel='stylesheet' href='http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css'>
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
-    <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script>
+    <script src='/static/js/jquery-1.9.1.js'></script>
+    <script src='/static/js/jquery-ui.js'></script>
+	<script src='/static/js/jquery.dataTables.min.js'></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+
+    <link rel='stylesheet' href='/static/js/jquery-ui.css'>
+    <link rel="stylesheet" href="/static/js/bootstrap.min.css">
+	<link rel="stylesheet" href="/static/js/jquery.dataTables.css">
  
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
       <div class="container">
