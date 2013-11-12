@@ -14,9 +14,3 @@ def _load(path):
     return name, imp.load_source(name, path)
 
 
-import types
-plugins = importPlugins('plugins')
-for module in plugins:
-    obj = plugins[module]
-    functions = [a for a in obj.__dict__.keys() if type(obj.__dict__[a]) == types.FunctionType]
-    print "Module: {} Object: {} Functions: {}".format(module, obj, functions)

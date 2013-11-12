@@ -16,6 +16,7 @@ import copy
 import time
 import traceback
 import socket
+import re
 
 import bottle
 import bottle.ext.sqlite
@@ -24,14 +25,10 @@ from cork.sqlite_backend import SQLiteBackend
 from beaker.middleware import SessionMiddleware
 
 
-from quenb import ParseRules, ClientResponse, Authentication, ClientDatabase
+from quenb import ParseRules, ClientResponse, Authentication, ClientDatabase, RulesDatabase
 from pyparsing import ParseException
 from settings import *
 
-
-def error(M):
-    sys.stderr.write(str(M))
-    sys.stderr.write("\n")
 
 
 app = bottle.Bottle()
@@ -55,8 +52,35 @@ authorize = aaa.make_auth_decorator(fail_redirect="/", role="user")
 ruler = ParseRules.QuenbRuleParser()
 
 
+
+
+### Helpers ###
+
+
+
+def error(M):
+    """
+    Just prints an error.
+    """
+    sys.stderr.write(str(M))
+    sys.stderr.write("\n")
+
 def post_get(name, default=''):
+    """
+    Gets data from POST and cleans it up
+    """
     return bottle.request.POST.get(name, default).strip()
+
+
+def setup(db_path="quenb.db"):
+    """
+    Sets up the initial database tables.
+    """
+    db = sqlite3.connect(db_path)
+    with db:
+        RulesDatabase.setup(db)
+        ClientDatabase.setup(db)
+
 
 # Index page, just shows some pretty stuff telling you to log in
 @app.get('/')
@@ -105,6 +129,7 @@ def get_webclient():
 
     return d
 
+
 # This is called via AJAX from the webclient, it returns client instructions/data
 @app.get('/display')
 def get_display(db):
@@ -141,6 +166,10 @@ def get_display(db):
     # based on the other information they've supplied.
     cid = query.cid
 
+    # MAC address: remove all but hex chars and lowercase-ify it for matching
+    mac = query.mac.lower()
+    mac = re.sub(r'[^a-z0-9]', '', mac)
+
     # If they didn't include a version string, then version is the empty
     # list, otherwise it should be a [NAME, MAJOR, MINOR, PATCH] list
     version = query.version.split(',')
@@ -155,7 +184,7 @@ def get_display(db):
         'version':  version,
         'addr':     addr,
         'location': query.location,
-        'mac':      query.mac,
+        'mac':      mac,
         'calls':    query.calls,
         'token':    query.token,
         'datetime': dt_list,
@@ -179,10 +208,10 @@ def get_display(db):
         for ruletuple in db.execute("""SELECT * FROM rules
                                     ORDER BY priority ASC"""):
             # For each rule determine if it fires/applies
-            # if so, then those outcomes are applied to the output
+            # if so, then those actions are applied to the output
 
             # the rules are done from lowest to highest, so the higher
-            # the priority, it'll apply the outcomes LAST, and thus be
+            # the priority, it'll apply the actions LAST, and thus be
             # the set that is sent.
 
             # Parse the rule and evaluate
@@ -193,18 +222,18 @@ def get_display(db):
                 error("Error parsing rule {},{}".format(rule, client_info))
                 traceback.print_exc()
 
-            # Rule matched: Load the outcome and apply it
+            # Rule matched: Load the action and apply it
             if result:
 
-                outcome_id = ruletuple['outcome']
+                action_id = ruletuple['action']
 
-                outcomes = db.execute("SELECT module, function, args FROM outcomes WHERE id=?",
-                                      (outcome_id,))
-                outcomes = list(outcomes)
+                actions = db.execute("SELECT module, function, args FROM actions WHERE id=?",
+                                      (action_id,))
+                actions = list(actions)
 
-                if outcomes:
-                    outcometuple = outcomes.pop()
-                    (module_name, function_name, function_args) = outcometuple
+                if actions:
+                    actiontuple = actions.pop()
+                    (module_name, function_name, function_args) = actiontuple
                     (client_code, client_info) = ClientResponse.runOutcome(PLUGIN_DIR, module_name, function_name, function_args, client_info)
                     response.update(client_code)
     return json.dumps(response)
@@ -219,11 +248,15 @@ def get_admin(db):
         'clients' : ClientDatabase.getClients(db),
     }
 
-@app.get('/admin/rules', template='admin_rules')
+@app.get('/admin/rules', template='rules')
 def get_admin_rules(db):
-    return {}
+    from pprint import pprint
+    pprint(RulesDatabase.getRules(db))
+    return {
+      'rules' : RulesDatabase.getRules(db),
+    }
     
-@app.get('/admin/rules/add', template='admin_rule')
+@app.get('/admin/rules/add', template='add_rule')
 def get_admin_add_rule(db):
     return {}
 
@@ -231,7 +264,7 @@ def get_admin_add_rule(db):
 def get_admin_edit_rule(db, rule_id):
     return {}
     
-@app.get('/admin/rules/add', template='admin_delete_rule')
+@app.get('/admin/rules/delete', template='admin_delete_rule')
 def get_admin_delete_rule(db):
     return {}
 
@@ -314,29 +347,29 @@ def database_update(db, tablename, id, item, acceptable_keys):
                 stmt = "UPDATE {} SET {}=? WHERE id=?".format(tablename, key)
                 db.execute(stmt, (value, id))
 
-@app.get('/api/clients')
-def get_api_clients(db):
-    auth_check(db)
-    return json.dumps(database_dump(db, "clients"))
+#@app.get('/api/clients')
+#def get_api_clients(db):
+#    auth_check(db)
+#    return json.dumps(database_dump(db, "clients"))
 
-@app.get('/api/outcomes')
-def get_api_outcomes(db):
-    auth_check(db)
-    return json.dumps(database_dump(db, "outcomes"))
+#@app.get('/api/actions')
+#def get_api_actions(db):
+#    auth_check(db)
+#    return json.dumps(database_dump(db, "actions"))
 
-@app.put('/api/outcomes')
-@app.put('/api/outcomes/<id>')
-def put_api_outcomes(db, id=None):
+@app.put('/api/actions')
+@app.put('/api/actions/<id>')
+def put_api_actions(db, id=None):
     auth_check(db)
-    database_update(db, 'outcomes', id, dict(bottle.request.forms),
+    database_update(db, 'actions', id, dict(bottle.request.forms),
                     ['code', 'title','description', 'id'])
     return json.dumps(None)
 
-@app.delete('/api/outcomes/<id>')
-def delete_api_outcomes(db, id=None):
+@app.delete('/api/actions/<id>')
+def delete_api_actions(db, id=None):
     auth_check(db)
     with db:
-        db.execute("DELETE FROM outcomes WHERE id=?", (id,))
+        db.execute("DELETE FROM actions WHERE id=?", (id,))
     return json.dumps(None)
 
 
@@ -352,7 +385,7 @@ def get_api_rules(db):
 def put_api_rules(db, id=None):
     auth_check(db)
     database_update(db, "rules", id, dict(bottle.request.forms),
-                    ['priority','rule','outcome', 'id'])
+                    ['priority','rule','action', 'id'])
     return json.dumps(None)
 
 @app.delete('/api/rules/<id>')
@@ -362,53 +395,6 @@ def delete_api_rules(db, id=None):
         db.execute("DELETE FROM rules WHERE id=?", (id,))
     return json.dumps(None)
 
-def setup(db_path="quenb.db"):
-    db = sqlite3.connect(db_path)
-    with db:
-        db.execute("""CREATE TABLE IF NOT EXISTS clients
-                   (cid TEXT PRIMARY KEY,
-                   ip TEXT,
-                   hostname TEXT,
-                   last_heard TIMESTAMP)""")
-        db.execute("""CREATE TABLE IF NOT EXISTS outcomes
-                   (id INTEGER PRIMARY KEY,
-                   module TEXT,
-                   function TEXT,
-                   args TEXT,
-                   title TEXT, description TEXT)""")
-        db.execute("""CREATE TABLE IF NOT EXISTS rules
-                   (id INTEGER PRIMARY KEY,
-                   priority INT NOT NULL, rule TEXT,
-                   outcome INTEGER,
-                   FOREIGN KEY(outcome) REFERENCES outcomes(id))""")
-        db.execute("""CREATE TABLE IF NOT EXISTS users
-                   (id INTEGER PRIMARY KEY, username TEXT UNIQUE NOT NULL,
-                   salt TEXT NOT NULL,
-                   hash TEXT NOT NULL,
-                   hash_version INT NOT NULL)""")
-
-        # TODO The default outcome is hit if there is no configuration
-        # on the server, so make it something funny.
-        db.execute("""INSERT OR IGNORE INTO outcomes
-                   (id, module, function, args)
-                   VALUES (0, 'quenb-builtin', 'display_url', 'http://nyan.cat')""")
-
-        # There must always be a rule at the bottom. Well, I say there must
-        # be.
-        if not list(db.execute("SELECT * FROM rules")):
-            db.execute("""INSERT OR IGNORE INTO rules
-                          (priority, rule, outcome)
-                          VALUES (0, "true", 0)""")
-
-#        if not list(db.execute("SELECT * FROM code")):
-#            db.execute("""INSERT OR IGNORE INTO code
-#                       (id, title, body)
-#                       VALUES (0, "Example Code", '(define foo "bar")')""")
-#
-#        if not list(db.execute("SELECT * FROM users")):
-#            db.execute("""INSERT OR IGNORE INTO users
-#                       (username, salt, hash, hash_version)
-#                       VALUES ("root", "", "root", 0)""")
 
 
 if __name__ == '__main__':
