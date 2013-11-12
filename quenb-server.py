@@ -180,7 +180,6 @@ def logout():
 
 
 ### Admin pages ###
-
 @authorize(role="admin")
 @app.get('/admin', template='admin')
 def get_admin(db):
@@ -217,6 +216,38 @@ def get_admin_edit_rule(db, rule_id):
 @app.get('/admin/rules/delete:rule_id', template='admin_delete_rule')
 def get_admin_delete_rule(db):
     return {}
+
+
+@authorize(role="admin")
+@app.get('/admin/actions', template='actions')
+def get_admin_actions(db):
+    """
+    Actions admin page - lists the existing actions so the administrator can
+    edit/delete them, and provides a link to add a new action
+    """
+    return {
+      'actions' : RulesDatabase.getActions(db),
+    }
+    
+@authorize(role="admin")
+@app.get('/admin/actions/add', template='add_action')
+def get_admin_add_action(db):
+    return {}
+
+@authorize(role="admin")
+@app.get('/admin/actions/edit/:action_id', template='admin_action')
+def get_admin_edit_action(db, action_id):
+    return {}
+    
+@authorize(role="admin")
+@app.get('/admin/actions/delete:action_id', template='admin_delete_action')
+def get_admin_delete_action(db):
+    return {}
+
+
+
+
+
 
 
 
