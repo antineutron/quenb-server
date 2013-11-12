@@ -66,4 +66,16 @@ def getRules(db):
           ON rules.action = actions.id
           ORDER BY priority ASC
         """)]
+
+
+def getActions(db):
+    """
+    Given the QuenB database, return a result with action tuples
+    """
+    with db:
+        return [dict(row) for row in db.execute("""
+          SELECT id, module, function, args, title, description
+          FROM actions
+          ORDER BY title ASC
+        """)]
             
