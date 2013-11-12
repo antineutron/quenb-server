@@ -13,6 +13,15 @@ def setup(db):
                last_heard TIMESTAMP)""")
 
 
+def updateClient(db, cid, addr, hostname):
+    with db:
+        # Insert a entry into the database
+        db.execute("INSERT OR IGNORE INTO clients (cid, ip, hostname) VALUES (?, ?, ?)",
+                   (cid,addr,hostname))
+        # Then update the timestamp from when we last heard them.
+        db.execute("UPDATE clients SET last_heard = ? WHERE cid = ?",
+                   (datetime.now(), cid))
+
 def getClients(db, timeslot_seconds=3600):
     """
     Given the QuenB database, returns a list of the clients we've seen recently
@@ -28,5 +37,4 @@ def getClients(db, timeslot_seconds=3600):
           WHERE last_heard > ?
           ORDER BY hostname ASC
         """, (slot_start,))]
-
 
