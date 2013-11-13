@@ -88,6 +88,11 @@ def get_static(filename):
 def get_index():
     return {}
 
+# About QuenB
+@app.get('/about', template='about')
+def get_about():
+    return {}
+
 
 # This returns the webclient page, which is where the signage displays start.
 # The page loads some Javascript to poll the server asking it what to display, etc.
