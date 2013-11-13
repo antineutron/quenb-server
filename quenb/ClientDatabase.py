@@ -11,6 +11,8 @@ def setup(db):
                (cid TEXT PRIMARY KEY,
                ip TEXT,
                hostname TEXT,
+               mac TEXT,
+               version TEXT,
                last_heard TIMESTAMP)""")
 
 def getClientDetails(db, request, session, query):
@@ -75,11 +77,12 @@ def getClientDetails(db, request, session, query):
 def updateClient(db, cid, addr, hostname, mac, version):
     with db:
         # Insert a entry into the database
-        db.execute("INSERT OR IGNORE INTO clients (cid, ip, hostname) VALUES (?, ?, ?)",
-                   (cid,addr,hostname))
+        print "cid {} addr {} hostname {} mac {} version {} ".format(cid, addr, hostname, mac, version)
+        db.execute("INSERT OR IGNORE INTO clients (cid, ip, hostname, mac, version) VALUES (?, ?, ?, ?, ?)",
+                   (cid, addr, hostname, mac, ','.join(version)))
         # Then update the timestamp from when we last heard them.
-        db.execute("UPDATE clients SET last_heard = ? WHERE cid = ?",
-                   (datetime.now(), cid))
+        db.execute("UPDATE clients SET last_heard = ?, ip = ?, hostname = ?, mac = ?, version = ? WHERE cid = ?",
+                   (datetime.now(), addr, hostname, mac, ','.join(version), cid))
 
 def getClients(db, timeslot_seconds=3600):
     """
@@ -91,7 +94,7 @@ def getClients(db, timeslot_seconds=3600):
         slot_start = datetime.now() - timedelta(seconds=timeslot_seconds)
 
         return [dict(row) for row in db.execute("""
-          SELECT cid, ip, hostname, last_heard
+          SELECT cid, ip, hostname, mac, version, last_heard
           FROM clients
           WHERE last_heard > ?
           ORDER BY hostname ASC
