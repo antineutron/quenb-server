@@ -4,6 +4,7 @@
     <script src='/static/js/jquery-1.9.1.js'></script>
     <script src='/static/js/jquery-ui.js'></script>
 	<script src='/static/js/jquery.dataTables.min.js'></script>
+    <script src="/static/js/jquery.jeditable.mini.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
 
     <link rel='stylesheet' href='/static/js/jquery-ui.css'>
