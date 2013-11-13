@@ -204,9 +204,18 @@ def get_admin_rules(db):
     edit/delete them, and provides a link to add a new rule
     """
     return {
-      'rules' : RulesDatabase.getRules(db),
+      'rules'   : RulesDatabase.getRules(db),
+      'actions' : RulesDatabase.getActions(db),
     }
     
+@authorize(role="admin")
+@app.post('/admin/rules/update_field')
+def post_admin_update_rule_field(db):
+    rule_id = post_get('rule_id')
+    field   = post_get('field')
+    value   = post_get('value')
+    return RulesDatabase.updateRuleField(db, rule_id, field, value)
+
 @authorize(role="admin")
 @app.get('/admin/rules/add', template='add_rule')
 def get_admin_add_rule(db):
@@ -223,6 +232,9 @@ def get_admin_delete_rule(db):
     return {}
 
 
+
+
+
 @authorize(role="admin")
 @app.get('/admin/actions', template='actions')
 def get_admin_actions(db):
@@ -233,7 +245,17 @@ def get_admin_actions(db):
     return {
       'actions' : RulesDatabase.getActions(db),
     }
-    
+
+@authorize(role="admin")
+@app.get('/admin/api/actions/')
+def get_admin_api_actions(db):
+    """
+    Get JSON representation of actions list (TODO content negotiation instead?)
+    """
+    return {
+      'actions' : RulesDatabase.getActions(db),
+    }
+
 @authorize(role="admin")
 @app.get('/admin/actions/add', template='add_action')
 def get_admin_add_action(db):
