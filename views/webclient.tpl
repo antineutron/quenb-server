@@ -41,8 +41,8 @@ img.bg {
 
 </style>
 <!-- Download jquery from their CDN -->
-<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-<script src="http://code.jquery.com/jquery-migrate-1.1.1.min.js"></script>
+<script src="/static/js/jquery-1.9.1.min.js"></script>
+<script src="/static/js/jquery-migrate-1.1.1.min.js"></script>
 
 <!-- Include notification stuff (noty) -->
 <script src="/static/js/noty/jquery.noty.js"></script>
@@ -61,14 +61,14 @@ var client_query = {
 </script>
 
 <!-- The main stuff is here. -->
-<script src=/static/quenb.js></script>
+<script src=/static/js/quenb.js></script>
 
 </head>
 <body>
     <!-- Special item e.g. to display when things go wrong -->
-    <img id="tvstatic" class="bg hidden special" src="/static/tvstatic.gif">
+    <img id="tvstatic" class="bg hidden special" src="/static/images/tvstatic.gif">
 
 	<!-- As above, but we can use this to display an arbitrary image fullscreen -->
-    <img id="imgfullscreen" class="bg hidden" src="/static/tvstatic.gif">
+    <img id="imgfullscreen" class="bg hidden" src="/static/images/tvstatic.gif">
 </body>
 </html>
