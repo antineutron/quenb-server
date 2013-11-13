@@ -67,7 +67,26 @@ def getRules(db):
           ORDER BY priority ASC
         """)]
 
+def updateRuleField(db, rule_id, field, value):
+    """
+    Updates a specific field for a rule, used by the fancy-schmancy rules editing table to edit a field at a time.
+    """
+    with db:
+        # A bit hacky, but works around the problem of identifiers not being parameterisable
+        field = field.strip().lower()
+        if field in ['priority', 'rule', 'action']:
+            
+            db.execute("""
+            UPDATE rules
+            SET {} = ?
+            WHERE id = ?
+            """.format(field), (value, rule_id))
 
+            # Send back whatever's in the database, whether updated or not
+            return [row[0] for row in db.execute("""
+            SELECT {} FROM rules WHERE id=?
+            """.format(field), (rule_id,))][0]
+    
 def getActions(db):
     """
     Given the QuenB database, return a result with action tuples
