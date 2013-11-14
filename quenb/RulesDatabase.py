@@ -98,3 +98,22 @@ def getActions(db):
           ORDER BY title ASC
         """)]
             
+def updateActionField(db, action_id, field, value):
+    """
+    Updates a specific field for an action, used by the fancy-schmancy action editing table to edit a field at a time.
+    """
+    with db:
+        # A bit hacky, but works around the problem of identifiers not being parameterisable
+        field = field.strip().lower()
+        if field in ['title', 'description']:
+            
+            db.execute("""
+            UPDATE actions
+            SET {} = ?
+            WHERE id = ?
+            """.format(field), (value, action_id))
+
+            # Send back whatever's in the database, whether updated or not
+            return [row[0] for row in db.execute("""
+            SELECT {} FROM actions WHERE id=?
+            """.format(field), (action_id,))][0]
