@@ -11,12 +11,12 @@ import traceback
 
 import bottle
 import bottle.ext.sqlite
-from cork import Cork
+from cork import Cork, AuthException
 from cork.sqlite_backend import SQLiteBackend
 from beaker.middleware import SessionMiddleware
 
 
-from quenb import ParseRules, ClientResponse, Authentication, ClientDatabase, RulesDatabase
+from quenb import PluginLoader, ParseRules, ClientResponse, Authentication, ClientDatabase, RulesDatabase
 from pyparsing import ParseException
 from settings import *
 
@@ -38,11 +38,11 @@ session_opts = {
 }
 app_sessioned = SessionMiddleware(app, session_opts)
 
-authorize = aaa.make_auth_decorator(fail_redirect="/", role="user")
-
 ruler = ParseRules.QuenbRuleParser()
 
 
+# Not a setting really, but change here on upgrade
+API_VERSION = '0.0.2'
 
 
 ### Helpers ###
@@ -90,13 +90,18 @@ def get_index():
 
 # About QuenB
 @app.get('/about', template='about')
+@app.get('/about/', template='about')
 def get_about():
-    return {}
+    try:
+        return{'current_user' : aaa.current_user}
+    except AuthException:
+        return {'current_user': None}
 
 
 # This returns the webclient page, which is where the signage displays start.
 # The page loads some Javascript to poll the server asking it what to display, etc.
 @app.get('/webclient', template='webclient')
+@app.get('/webclient/', template='webclient')
 def get_webclient(db):
 
     # Get (or create) the client ID
@@ -114,6 +119,7 @@ def get_webclient(db):
 
 # This is called via AJAX from the webclient, it returns client instructions/data
 @app.get('/display')
+@app.get('/display/')
 def get_display(db):
 
     # Get the client's details
@@ -171,12 +177,14 @@ def get_display(db):
 
 ### Authentication pages ###
 @app.post('/login')
+@app.post('/login/')
 def login():
     username = post_get('username')
     password = post_get('password')
     aaa.login(username, password, success_redirect='/admin', fail_redirect='/')
 
 @app.post('/logout')
+@app.post('/logout/')
 def logout():
     aaa.logout(success_redirect='/', fail_redirect='/admin')
 
@@ -185,99 +193,104 @@ def logout():
 
 
 ### Admin pages ###
-@authorize(role="admin")
 @app.get('/admin', template='admin')
+@app.get('/admin/', template='admin')
 def get_admin(db):
     """
     Admin page - by default, just lists the currently connected clients.
     """
+    aaa.require(role='admin', fail_redirect='/')
+    from pprint import pprint
+    pprint(aaa.current_user.username)
     return {
+        'current_user' : aaa.current_user,
         'clients' : ClientDatabase.getClients(db),
     }
 
 
-@authorize(role="admin")
 @app.get('/admin/rules', template='rules')
+@app.get('/admin/rules/', template='rules')
 def get_admin_rules(db):
     """
     Rules admin page - lists the existing rules so the administrator can
     edit/delete them, and provides a link to add a new rule
     """
+    aaa.require(role='admin', fail_redirect='/')
     return {
+      'current_user' : aaa.current_user,
       'rules'   : RulesDatabase.getRules(db),
       'actions' : RulesDatabase.getActions(db),
     }
     
-@authorize(role="admin")
 @app.post('/admin/rules/update_field')
+@app.post('/admin/rules/update_field/')
 def post_admin_update_rule_field(db):
+    aaa.require(role='admin', fail_redirect='/')
     rule_id = post_get('rule_id')
     field   = post_get('field')
     value   = post_get('value')
     return RulesDatabase.updateRuleField(db, rule_id, field, value)
 
-@authorize(role="admin")
-@app.get('/admin/rules/add', template='add_rule')
-def get_admin_add_rule(db):
-    return {}
-
-@authorize(role="admin")
-@app.get('/admin/rules/edit/:rule_id', template='admin_rule')
-def get_admin_edit_rule(db, rule_id):
-    return {}
-    
-@authorize(role="admin")
-@app.get('/admin/rules/delete:rule_id', template='admin_delete_rule')
-def get_admin_delete_rule(db):
-    return {}
 
 
 
 
 
-@authorize(role="admin")
 @app.get('/admin/actions', template='actions')
+@app.get('/admin/actions/', template='actions')
 def get_admin_actions(db):
     """
     Actions admin page - lists the existing actions so the administrator can
     edit/delete them, and provides a link to add a new action
     """
+    aaa.require(role='admin', fail_redirect='/')
     return {
+      'current_user' : aaa.current_user,
       'actions' : RulesDatabase.getActions(db),
     }
 
-@authorize(role="admin")
+@app.post('/admin/actions/update_field')
+def post_admin_update_action_field(db):
+    aaa.require(role='admin', fail_redirect='/')
+    rule_id = post_get('action_id')
+    field   = post_get('field')
+    value   = post_get('value')
+    return RulesDatabase.updateActionField(db, rule_id, field, value)
+
 @app.get('/admin/api/actions/')
 def get_admin_api_actions(db):
     """
     Get JSON representation of actions list (TODO content negotiation instead?)
     """
+    aaa.require(role='admin', fail_redirect='/')
     return {
       'actions' : RulesDatabase.getActions(db),
     }
 
-@authorize(role="admin")
-@app.get('/admin/actions/add', template='add_action')
-def get_admin_add_action(db):
-    return {}
-
-@authorize(role="admin")
-@app.get('/admin/actions/edit/:action_id', template='admin_action')
-def get_admin_edit_action(db, action_id):
-    return {}
+@app.get('/admin/api/plugin_functions/')
+def get_admin_api_plugin_functions():
+    """
+    List all available plugin functions (as modulename.function)
+    """
+    aaa.require(role='admin', fail_redirect='/')
     
-@authorize(role="admin")
-@app.get('/admin/actions/delete:action_id', template='admin_delete_action')
-def get_admin_delete_action(db):
-    return {}
+    # List all plugins, then compress to a sorted list of 'module.function_name' strings for display
+    functions = PluginLoader.listAllFunctions(PLUGIN_DIR)
+
+    # Hackery :-( Needs to return a dict for the dropdown to work
+    # in our actions table.
+    expanded = {}
+    for mod, funs in functions.iteritems():
+        for fun in funs:
+            expanded[mod+'.'+fun] = mod+'.'+fun
+    return expanded
 
 
 
 
 
 
-
-
+### Client API functions ###
 
 @app.get('/api/ping')
 def get_api_ping():
@@ -286,9 +299,7 @@ def get_api_ping():
 @app.get('/api/version')
 def get_api_version(db):
     auth_check(db)
-    #FIXME should probably be the version of the API rather
-    # than a hardcoded string
-    return json.dumps("0.0.1")
+    return json.dumps(API_VERSION)
 
 def database_dump(db, tablename):
     # Not safe with user input

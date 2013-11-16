@@ -1,4 +1,4 @@
-% include head.tpl
+% include head.tpl current_user=current_user
 
     <style>
 	.panel-title{

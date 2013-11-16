@@ -1,4 +1,4 @@
- % include head.tpl
+ % include head.tpl current_user=current_user
     <div class="center">
       <h2>Rules</h2>
       <p>
@@ -13,9 +13,7 @@
 		<tbody>
         % for rule in rules:
         <tr id='{{rule['id']}}'>
-          <td class='spinner'>
-            {{rule['priority']}}
-          </td>
+          <td class='spinner'>{{rule['priority']}}</td>
           <td class='editable'>{{rule['rule']}}</td>
           <td class='action_select'>
 		    {{rule['title']}}
@@ -54,7 +52,7 @@
     		};
 
 			// Make text fields in-place editable
-            oTable.$('td.editable').editable( '/admin/rules/update_field', {
+            oTable.$('td.editable').editable( '/admin/actions/update_field', {
 				"type" : 'textarea',
                 "callback": inline_update,
                 "submitdata": inline_submit,
@@ -63,7 +61,7 @@
             } );
 
 			// Make integer fields spinners
-            oTable.$('td.spinner').editable( '/admin/rules/update_field', {
+            oTable.$('td.spinner').editable( '/admin/actions/update_field', {
 				"type" : "text",
 				//loadurl : "/admin/api/actions/",
 				//"data" : {"first" : "First", "second": "Second"},
@@ -74,7 +72,7 @@
             } );
 
 			// Make selectable fields select lists
-            oTable.$('td.action_select').editable( '/admin/rules/update_field', {
+            oTable.$('td.action_select').editable( '/admin/actions/update_field', {
 				"type" : "select",
 				"loadurl" : "/admin/api/actions/",
 				//"data" : {"1" : "First", "2": "Second"},

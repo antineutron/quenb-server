@@ -8,7 +8,7 @@
     <script src="/static/js/bootstrap.min.js"></script>
 
     <link rel='stylesheet' href='/static/js/jquery-ui.css'>
-    <link rel="stylesheet" href="/static/js/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/js/bootstrap-cerulean.min.css">
 	<link rel="stylesheet" href="/static/js/jquery.dataTables.css">
  
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
@@ -21,14 +21,28 @@
         </div>
         <div class="navbar-collapse collapse">
 		  <ul class="nav navbar-nav">
-            <li class="active"><a href="/admin/rules">Rules</a></li>
-            <li class="active"><a href="/admin/actions">Actions</a></li>
-            <li><a href="/webclient">Client view</a></li>
+		  	% setdefault('nav_selected', '')
+            <li><a href="/admin/rules">Rules</a></li>
+            <li><a href="/admin/actions">Actions</a></li>
+            <li><a href="/webclient">Client View</a></li>
             <li><a href="/about">About</a></li>
           </ul>
+		  % if defined('current_user') and current_user:
           <form class="navbar-form navbar-right" method="POST" action="/logout">
+		    Logged in as {{current_user.username}}
             <button type="submit" class="btn btn-success">Sign out</button>
           </form>
+		  % else:
+          <form class="navbar-form navbar-right" method="POST" action="/login">
+		     <div class="form-group">
+		    <input name="username" type="text" placeholder="Admin username" class="form-control">
+			</div>
+		     <div class="form-group">
+			<input name="password" type="password" placeholder="Password" class="form-control">
+			</div>
+            <button type="submit" class="btn btn-success">Sign in</button>
+          </form>
+		  % end if
         </div><!--/.navbar-collapse -->
       </div>
     </div>

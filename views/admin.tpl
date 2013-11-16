@@ -1,4 +1,4 @@
- % include head.tpl
+ % include head.tpl current_user=current_user
     <div class="jumbotron">
       <div class="container">
         <h1>Welcome to QuenB!</h1>
