@@ -50,8 +50,8 @@ def setup(db):
     # be.
     if not list(db.execute("SELECT * FROM rules")):
         db.execute("""INSERT OR IGNORE INTO rules
-                      (priority, rule, action)
-                      VALUES (0, "true", 0)""")
+                      (id, priority, rule, action)
+                      VALUES (0, 0, "true", 0)""")
 
 
 def getRules(db):
