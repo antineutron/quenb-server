@@ -8,7 +8,7 @@
 // TODO First, check whether there's a cookie set for the client id, if so
 // use that. Otherwise, use the random one the page just generated.
 
-var version = "Webclient,0,0,8";
+var version = "Webclient,0,0,9";
 
 if ("cid" in client_query) {
     var cid = client_query.cid;
@@ -49,6 +49,8 @@ function looplet(internal_data) {
         "version": internal_data.version,
         "addr": internal_data.addr,
         "calls": internal_data.calls,
+        "window_width" : $(window).width(),
+        "window_height" : $(window).height(),
     }
     if (internal_data.token) {
         variables.token = internal_data.token;
