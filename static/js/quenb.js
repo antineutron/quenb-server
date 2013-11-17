@@ -115,7 +115,7 @@ function looplet2(data, internal_data) {
 
     if (data.special_show) {
         $('.special#' + data.special_show).removeClass('hidden');
-    } else if (data.display_image){
+    } else if (data.display_image && !data.display_url){
         $('#imgfullscreen').attr('src', data.display_image);
         $('#imgfullscreen').removeClass('hidden');
     }
