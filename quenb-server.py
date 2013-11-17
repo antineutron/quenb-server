@@ -200,8 +200,6 @@ def get_admin(db):
     Admin page - by default, just lists the currently connected clients.
     """
     aaa.require(role='admin', fail_redirect='/')
-    from pprint import pprint
-    pprint(aaa.current_user.username)
     return {
         'current_user' : aaa.current_user,
         'clients' : ClientDatabase.getClients(db),
@@ -236,36 +234,82 @@ def post_admin_update_rule_field(db):
 
 
 
-@app.get('/admin/actions', template='actions')
-@app.get('/admin/actions/', template='actions')
+@app.get('/admin/actions')
+@app.get('/admin/actions/')
 def get_admin_actions(db):
     """
     Actions admin page - lists the existing actions so the administrator can
-    edit/delete them, and provides a link to add a new action
+    edit/delete them, and provides a link to add a new action.
+    """
+    aaa.require(role='admin', fail_redirect='/')
+
+    # AJAX-style JSON request: just return the list of actions
+    if(bottle.request.content_type == 'application/json'):
+        return {
+          'actions' : RulesDatabase.getActions(db),
+        }
+    # Default: do templatey things
+    else:
+        return bottle.template('actions.tpl', {
+          'current_user' : aaa.current_user,
+          'actions' : RulesDatabase.getActions(db),
+        })
+
+
+@app.get('/admin/action/:id')
+def get_admin_action(db, id):
+    """
+    """
+
+    aaa.require(role='admin', fail_redirect='/')
+    action = RulesDatabase.getAction(db, id)
+    if not action:
+        bottle.abort(404, 'unknown action ID '+str(id))
+
+    # AJAX-style JSON request: just return the list of actions
+    if(bottle.request.content_type == 'application/json'):
+        return {
+          'action' : action,
+        }
+
+    # Default: do templatey things
+    else:
+        return bottle.template('action.tpl', {
+          'current_user' : aaa.current_user,
+          'action' : action,
+        })
+
+@app.put('/admin/action')
+def put_admin_action(db):
+    """
+    """
+    aaa.require(role='admin', fail_redirect='/')
+    action = RulesDatabase.putAction(db)
+    return {'action' : action}
+
+@app.post('/admin/action/:id')
+def post_admin_action(db):
+    """
     """
     aaa.require(role='admin', fail_redirect='/')
     return {
-      'current_user' : aaa.current_user,
-      'actions' : RulesDatabase.getActions(db),
     }
 
-@app.post('/admin/actions/update_field')
-def post_admin_update_action_field(db):
+@app.delete('/admin/action/:id')
+def delete_admin_action(db, id):
+    """
+    """
     aaa.require(role='admin', fail_redirect='/')
-    rule_id = post_get('action_id')
-    field   = post_get('field')
-    value   = post_get('value')
-    return RulesDatabase.updateActionField(db, rule_id, field, value)
+    action = RulesDatabase.deleteAction(db, id)
+    return {}
 
-@app.get('/admin/api/actions/')
-def get_admin_api_actions(db):
-    """
-    Get JSON representation of actions list (TODO content negotiation instead?)
-    """
-    aaa.require(role='admin', fail_redirect='/')
-    return {
-      'actions' : RulesDatabase.getActions(db),
-    }
+
+
+
+
+
+
+
 
 @app.get('/admin/api/plugin_functions/')
 def get_admin_api_plugin_functions():
