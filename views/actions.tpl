@@ -6,19 +6,25 @@
       </p>
 
       <table id='actionTable'>
-	    <a href='/admin/actions/create' onclick='addAction(); return false;'>Add new action</a>
+	    <a href='#' onclick='addAction(); return false;'>Add new action</a>
 	    <thead>
           <tr><th>Title</th><th>Plugin function call</th><th>Description</th></tr>
 		</thead>
 		<tbody>
         % for action in actions:
         <tr id='{{action['id']}}'>
-          <td class='editable'>{{action['title']}}</td>
+          <td>
+		    % if action['id'] > 0:
+		    <button class='btn btn-default glyphicon glyphicon-remove-circle' alt='Delete'
+			        onclick='deleteAction({{action['id']}}); return false;'></button>
+			% end if
+			<span class='editable'>{{action['title']}}</span></td>
+
           <td>
 		    <span class='select_plugin' style="display: inline">{{action['module']}}.{{action['function']}}</span>
 			(<span class='module_args'>{{action['args'] or ''}}</span>)
 	      </td>
-          <td class='editable'>{{action['description']}}</td>
+          <td><span class='editable'>{{action['description']}}</span></td>
         </tr>
         % end for
 		</tbody>
@@ -29,8 +35,56 @@
 
       <script>
 	  function addAction(){
-	    alert('Add new action');
-		oTable.fnAddData(['Things', 'foo.do_something9foo)', 'shoes']);
+		var oData = $('#actionTable').dataTable();
+		$.ajax({
+			'url' : '/admin/action',
+			'type' : 'PUT',
+			'data' : {'title' : '', 'description' : '', 'plugin' : '', 'args' : ''},
+			'dataType' : 'json',
+			'success' : function(data){
+				d = data['action'];
+				tblRow = [d['title'], d['module']+'.'+d['function']+'('+d['args']+')', d['description']];
+				oData.fnAddData(tblRow);
+			},
+			'error' : function(data){
+				noty({
+                  type: 'error',
+                  text: 'Failed to create action: '+data.statusText,
+                  timeout: 5000,
+                  layout: 'topCenter'
+                });
+			}
+		});
+	  }
+
+	  function updateAction(id, data){
+		var oData = $('#actionTable').dataTable();
+		$.ajax({
+			'url' : '/admin/action/'+id,
+			'type' : 'POST',
+			'data' : data,
+			'dataType' : 'json'
+		});
+	  }
+
+	  function deleteAction(id){
+		var oData = $('#actionTable').dataTable();
+		$.ajax({
+			'url' : '/admin/action/'+id,
+			'type' : 'DELETE',
+			'dataType' : 'json',
+			'success' : function(data){
+				oData.fnDeleteRow($('tr #'+id));
+			},
+			'error' : function(data){
+				noty({
+                  type: 'error',
+                  text: 'Failed to delete action: '+data.statusText,
+                  timeout: 5000,
+                  layout: 'topCenter'
+                });
+			}
+		});
 	  }
 
 		$(document).ready(function() {
@@ -46,6 +100,7 @@
                     "field":  fieldName 
                 }; 
             }; 
+
      
             // Callback function for inline editing 
             var inline_update = function( sValue, y ) { 
