@@ -300,6 +300,11 @@ def delete_admin_action(db, id):
     """
     """
     aaa.require(role='admin', fail_redirect='/')
+
+    # Don't allow deleting the default action
+    if int(id) == 0:
+        bottle.abort(403, 'Cannot delete default action')
+
     action = RulesDatabase.deleteAction(db, id)
     return {}
 
