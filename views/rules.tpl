@@ -17,7 +17,13 @@
 		<tbody>
         % for rule in rules:
         <tr id='{{rule['id']}}'>
-          <td class='spinner'>{{rule['priority']}}</td>
+		  <td>
+		    % if rule['id'] > 0:
+		    <button class='btn btn-default glyphicon glyphicon-remove-circle' alt='Delete'
+			        onclick='deleteRule({{rule['id']}}); return false;'></button>
+			% end if
+            {{rule['priority']}}
+		  </td>
           <td class='editable'>{{rule['rule']}}</td>
           <td class='action_select'>
 		    {{rule['title']}}
@@ -95,8 +101,8 @@
       });
 
 
-	  // When the delete button is pushed, ask for confirmation then ajax-delete the action
-	  function deleteAction(id){
+	  // When the delete button is pushed, ask for confirmation then ajax-delete the rule
+	  function deleteRule(id){
 		var oData = $('#ruleTable').dataTable();
 		$.ajax({
 			'url' : '/admin/rule/'+id,
