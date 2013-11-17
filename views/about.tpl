@@ -44,6 +44,7 @@
 		  <li>The awesome <a href='http://jquery.com'>jQuery</a> JavaScript library, which makes life SO much easier for everyone</li>
 		  <li>The <a href='http://jqueryui.com'>jQuery UI</a> and <a href='http://getbootstrap.com'>Bootstrap</a> libraries for fancy-looking graphics, nice layouts etc.</li>
 		  <li>The <a href='http://datatables.net'>DataTables</a> jQuery plugin for flashy sortable/searchable/editable table layouts all over the admin interface</li>
+		  <li><a href='http://needim.github.io/noty/'>Noty</a> for message notifications</li>
 		</ul>
 		Thanks, everyone!
 		</div>
