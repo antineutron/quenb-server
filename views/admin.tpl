@@ -10,7 +10,7 @@
 	  <h2>Recently-seen client displays</h2>
 	  <table id='clientTable'>
 	    <thead>
-	      <tr><th>Client ID</th><th>Hostname</th><th>IP</th><th>MAC</th><th>Version</th><th>Actions</th></tr>
+	      <tr><th>Client ID</th><th>Hostname</th><th>IP</th><th>MAC</th><th>Version</th><th>Last seen</th><th></th></tr>
 	    </thead>
 
 	    <tbody>
@@ -21,6 +21,7 @@
 		  <td>{{client.get('ip')}}</td>
 		  <td>{{client.get('mac')}}</td>
 		  <td>{{client.get('version')}}</td>
+		  <td>{{client.get('last_heard')}}</td>
 		  <td>
 		    Restart client
 			Block client
@@ -30,7 +31,7 @@
 		% end
 	    </tbody>
 	    <tfoot>
-	      <tr><th>Client ID</th><th>Hostname</th><th>IP</th><th>MAC</th><th>Version</th><th>Actions</th></tr>
+	      <tr><th>Client ID</th><th>Hostname</th><th>IP</th><th>MAC</th><th>Version</th><th>Last seen</th><th></th></tr>
 	    </tfoot>
 	  </table>
 	  <script>
