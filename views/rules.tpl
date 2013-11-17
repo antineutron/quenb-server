@@ -6,6 +6,10 @@
         This is the current list of rules in the database:
       </p>
 
+	  <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addRuleModal">
+	    Add a new rule
+	  </button>
+
       <table id='ruleTable'>
 	    <thead>
           <tr><th>Priority</th><th>Rule</th><th>Action</th></tr>
@@ -26,7 +30,93 @@
 		</tfoot>
       </table>
 
+<div class="modal fade modal-dialog modal-content" id="addRuleModal" tabindex="-1" role="dialog" aria-labelledby="addRuleModalLabel" aria-hidden="true">
+  <div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+  <h4 id="addRuleModalLabel">Add rule</h4>
+  </div>
+
+  <form class="well" data-target="#addRuleModal" action="/admin/rule" method="PUT" id="addRuleModalForm">
+  <div class="modal-body">
+      <fieldset>
+        <label for='rule'>Rule</label>
+        <input type='textarea' name='rule' value='true'/>
+
+        <label for='action'>Action to take when rule 'hits'</label>
+        <select name='action'>
+          % for action in actions:
+          <option value='{{action['id']}}'>{{action['title']}} ({{action['description']}})</option>
+          % end for
+        </select>
+        <label for='priority'>Rule priority (if multiple rules match, higher priority overrides lower priority)</label>
+		<input type='text' name='priority' value='1'/>
+      </fieldset>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <input type="submit" class="btn btn-primary" id="addRuleModalSubmit" value="Add new rule"/>
+  </div>
+  </form>
+</div>
       <script>
+
+	  // When add rule modal form is submitted, convert to
+	  // an AJAX request and update the table with returned data (or show error)
+      $('form#addRuleModalForm').on('submit', function(event) {
+        var $form = $(this);
+		var $target = $form.attr('data-target');
+		var oData = $('#ruleTable').dataTable();
+ 
+        $.ajax({
+            type: $form.attr('method'),
+            url: $form.attr('action'),
+            data: $form.serialize(),
+ 
+            success: function(data, status) {
+				d = data['rule'];
+				tblRow = [d['priority'], d['rule']+'.'+d['action_title']];
+				oData.fnAddData(tblRow);
+				$($target).modal('hide');
+            },
+			error : function(data){
+				$($target).modal('hide');
+				noty({
+                  type: 'error',
+                  text: 'Failed to create rule: '+data.statusText,
+                  timeout: 5000,
+                  layout: 'topCenter'
+                });
+			}
+        });
+ 
+        event.preventDefault();
+
+      });
+
+
+	  // When the delete button is pushed, ask for confirmation then ajax-delete the action
+	  function deleteAction(id){
+		var oData = $('#ruleTable').dataTable();
+		$.ajax({
+			'url' : '/admin/rule/'+id,
+			'type' : 'DELETE',
+			'dataType' : 'json',
+			'success' : function(data){
+				oData.fnDeleteRow($('tr #'+id));
+			},
+			'error' : function(data){
+				noty({
+                  type: 'error',
+                  text: 'Failed to delete rule: '+data.statusText,
+                  timeout: 5000,
+                  layout: 'topCenter'
+                });
+			}
+		});
+	  }
+
+
 
 
         $(document).ready(function() {

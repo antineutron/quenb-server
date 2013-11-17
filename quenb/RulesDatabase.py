@@ -67,6 +67,49 @@ def getRules(db):
           ORDER BY priority ASC
         """)]
 
+def getRule(db, id):
+    """
+    Given the QuenB database, return a single rule tuple 
+    """
+    with db:
+        return [dict(row) for row in db.execute("""
+          SELECT id, module, function, args, title, description
+          FROM rules
+          WHERE id = ?
+        """, id)]
+
+def putRule(db, data):
+    """
+    Given the QuenB database, create a new Rule with the given settings
+    """
+    with db:
+        for needed in ['priority', 'action', 'rule']:
+            if needed not in data or not data[needed]:
+                data[needed] = ''
+
+        db.execute("""
+         INSERT INTO rules (priority, rule, action)
+         VALUES(?, ?, ?)
+        """, (data['priority'], data['rule'], data['action']))
+
+        c = db.execute("""
+          SELECT rules.id as id, priority, rule, actions.id as action_id, actions.title as action_title
+          FROM rules INNER JOIN actions ON(actions.id = rules.action)
+          WHERE rules.id = last_insert_rowid()
+        """)
+        return dict(c.fetchone())
+
+def deleteRule(db, id):
+    """
+    Given the QuenB database, delete a rule
+    """
+    with db:
+        db.execute("""
+          DELETE FROM rules
+          WHERE id = ?
+        """, (id,))
+
+
 def updateRuleField(db, rule_id, field, value):
     """
     Updates a specific field for a rule, used by the fancy-schmancy rules editing table to edit a field at a time.

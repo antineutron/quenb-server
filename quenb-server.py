@@ -206,34 +206,6 @@ def get_admin(db):
     }
 
 
-@app.get('/admin/rules', template='rules')
-@app.get('/admin/rules/', template='rules')
-def get_admin_rules(db):
-    """
-    Rules admin page - lists the existing rules so the administrator can
-    edit/delete them, and provides a link to add a new rule
-    """
-    aaa.require(role='admin', fail_redirect='/')
-    return {
-      'current_user' : aaa.current_user,
-      'rules'   : RulesDatabase.getRules(db),
-      'actions' : RulesDatabase.getActions(db),
-    }
-    
-@app.post('/admin/rules/update_field')
-@app.post('/admin/rules/update_field/')
-def post_admin_update_rule_field(db):
-    aaa.require(role='admin', fail_redirect='/')
-    rule_id = post_get('rule_id')
-    field   = post_get('field')
-    value   = post_get('value')
-    return RulesDatabase.updateRuleField(db, rule_id, field, value)
-
-
-
-
-
-
 @app.get('/admin/actions')
 @app.get('/admin/actions/')
 def get_admin_actions(db):
@@ -313,6 +285,84 @@ def delete_admin_action(db, id):
     return {}
 
 
+
+@app.get('/admin/rules')
+@app.get('/admin/rules/')
+def get_admin_rules(db):
+    """
+    Rules admin page - lists the existing rules so the administrator can
+    edit/delete them, and provides a link to add a new rule.
+    """
+    aaa.require(role='admin', fail_redirect='/')
+
+    # AJAX-style JSON request: just return the list of rules
+    if(bottle.request.content_type == 'application/json'):
+        return {
+          'rules' : RulesDatabase.getRules(db),
+        }
+    # Default: do templatey things
+    else:
+        return bottle.template('rules.tpl', {
+          'current_user' : aaa.current_user,
+          'rules' : RulesDatabase.getRules(db),
+          'actions' : RulesDatabase.getActions(db),
+        })
+
+
+@app.get('/admin/rule/:id')
+def get_admin_rule(db, id):
+    """
+    """
+
+    aaa.require(role='admin', fail_redirect='/')
+    rule = RulesDatabase.getRule(db, id)
+    if not rule:
+        bottle.abort(404, 'unknown rule ID '+str(id))
+
+    # AJAX-style JSON request: just return the list of rules
+    if(bottle.request.content_type == 'application/json'):
+        return {
+          'rule' : rule,
+        }
+
+    # Default: do templatey things
+    else:
+        return bottle.template('rule.tpl', {
+          'current_user' : aaa.current_user,
+          'rule' : rule,
+        })
+
+
+@app.put('/admin/rule')
+def put_admin_rule(db):
+    """
+    """
+    aaa.require(role='admin', fail_redirect='/')
+    rule = RulesDatabase.putRule(db, bottle.request.POST)
+    return {
+      'rule' : rule,
+    }
+
+@app.post('/admin/rule/:id')
+def post_admin_rule(db):
+    """
+    """
+    aaa.require(role='admin', fail_redirect='/')
+    rule = RulesDatabase.postRule(db, id, bottle.request.POST)
+    return {'rule' : rule}
+
+@app.delete('/admin/rule/:id')
+def delete_admin_rule(db, id):
+    """
+    """
+    aaa.require(role='admin', fail_redirect='/')
+
+    # Don't allow deleting the default rule
+    if int(id) == 0:
+        bottle.abort(403, 'Cannot delete default rule')
+
+    rule = RulesDatabase.deleteRule(db, id)
+    return {}
 
 
 
