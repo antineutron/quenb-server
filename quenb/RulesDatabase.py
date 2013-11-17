@@ -109,29 +109,34 @@ def getAction(db, id):
           WHERE id = ?
         """, id)]
 
-def putAction(db, plugin='', args=None, title=None, description=None):
+def putAction(db, data):
     """
     Given the QuenB database, create a new Action with the given settings
     """
     with db:
-        matches = re.match(r'^(\S+)\.([^.]+)$', plugin)
+        for needed in ['plugin', 'args', 'title', 'description']:
+            if needed not in data or not data[needed]:
+                data[needed] = ''
+
+        matches = re.match(r'^(\S+)\.([^.]+)$', data['plugin'])
         if matches:
             module = matches.group(1)
             function = matches.group(2)
         else:
             module = None
-            function = plugin
+            function = data['plugin']
 
         db.execute("""
          INSERT INTO actions (module, function, args, title, description)
          VALUES(?, ?, ?, ?, ?)
-        """, (module, function, args, title, description))
+        """, (module, function, data['args'], data['title'], data['description']))
 
-        return [dict(row) for row in db.execute("""
+        c = db.execute("""
           SELECT id, module, function, args, title, description
           FROM actions
           WHERE id = last_insert_rowid()
-        """)]
+        """)
+        return dict(c.fetchone())
 
 def deleteAction(db, id):
     """

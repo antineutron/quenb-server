@@ -20,14 +20,14 @@ def _load(path):
 #   }
 # }
 def listAllFunctions(plugindir):
-    all_modules = {}
+    all_modules = []
 
     # List of all plugin modules available
     modules = importPlugins(plugindir)
 
     for module_name in modules:
         module_obj = modules[module_name]
-        all_modules[module_name] = dict(
-          [(fname, fun) for (fname,fun) in module_obj.__dict__.iteritems() if type(fun) == types.FunctionType]
-        )
+        for (fname,fun) in module_obj.__dict__.iteritems():
+            if type(fun) == types.FunctionType:
+                all_modules.append(module_name+'.'+fname)
     return all_modules

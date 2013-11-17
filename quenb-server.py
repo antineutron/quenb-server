@@ -253,6 +253,7 @@ def get_admin_actions(db):
         return bottle.template('actions.tpl', {
           'current_user' : aaa.current_user,
           'actions' : RulesDatabase.getActions(db),
+          'plugins' : PluginLoader.listAllFunctions(PLUGIN_DIR),
         })
 
 
@@ -279,21 +280,24 @@ def get_admin_action(db, id):
           'action' : action,
         })
 
+
 @app.put('/admin/action')
 def put_admin_action(db):
     """
     """
     aaa.require(role='admin', fail_redirect='/')
-    action = RulesDatabase.putAction(db)
-    return {'action' : action}
+    action = RulesDatabase.putAction(db, bottle.request.POST)
+    return {
+      'action' : action,
+    }
 
 @app.post('/admin/action/:id')
 def post_admin_action(db):
     """
     """
     aaa.require(role='admin', fail_redirect='/')
-    return {
-    }
+    action = RulesDatabase.postAction(db, id, bottle.request.POST)
+    return {'action' : action}
 
 @app.delete('/admin/action/:id')
 def delete_admin_action(db, id):

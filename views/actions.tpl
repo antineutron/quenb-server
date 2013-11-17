@@ -5,8 +5,11 @@
 	    When a client matches a rule, an action is performed - usually displaying a page or an image.
       </p>
 
+	  <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addActionModal">
+	    Add a new action
+	  </button>
+
       <table id='actionTable'>
-	    <a href='#' onclick='addAction(); return false;'>Add new action</a>
 	    <thead>
           <tr><th>Title</th><th>Plugin function call</th><th>Description</th></tr>
 		</thead>
@@ -33,20 +36,65 @@
 		</tfoot>
       </table>
 
+ 
+
+
+<div class="modal fade modal-dialog modal-content" id="addActionModal" tabindex="-1" role="dialog" aria-labelledby="addActionModalLabel" aria-hidden="true">
+  <div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+  <h4 id="addActionModalLabel">Add action</h4>
+  </div>
+
+  <form class="well" data-target="#addActionModal" action="/admin/action" method="PUT" id="addActionModalForm">
+  <div class="modal-body">
+      <fieldset>
+        <label for='title'>Title</label>
+        <input type='text' name='title' placeholder='Title'/>
+        <label for='description'>Description</label>
+        <input type='text' name='description' placeholder='Description'/>
+        <label for='plugin'>Plugin function</label>
+        <select name='plugin'>
+          % for plugin in plugins:
+          <option value='{{plugin}}'>{{plugin}}</option>
+          % end for
+        </select>
+        <label for='args'>Plugin function arguments (comma-separated)</label>
+        <input type='text' name='args'/>
+      </fieldset>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <input type="submit" class="btn btn-primary" id="addActionModalSubmit" value="Add new action"/>
+  </div>
+  </form>
+</div>
+
+
+
+
+
       <script>
-	  function addAction(){
+	  // When add action modal form is submitted, convert to
+	  // an AJAX request and update the table with returned data (or show error)
+      $('form#addActionModalForm').on('submit', function(event) {
+        var $form = $(this);
+		var $target = $form.attr('data-target');
 		var oData = $('#actionTable').dataTable();
-		$.ajax({
-			'url' : '/admin/action',
-			'type' : 'PUT',
-			'data' : {'title' : '', 'description' : '', 'plugin' : '', 'args' : ''},
-			'dataType' : 'json',
-			'success' : function(data){
+ 
+        $.ajax({
+            type: $form.attr('method'),
+            url: $form.attr('action'),
+            data: $form.serialize(),
+ 
+            success: function(data, status) {
 				d = data['action'];
 				tblRow = [d['title'], d['module']+'.'+d['function']+'('+d['args']+')', d['description']];
 				oData.fnAddData(tblRow);
-			},
-			'error' : function(data){
+				$($target).modal('hide');
+            },
+			error : function(data){
+				$($target).modal('hide');
 				noty({
                   type: 'error',
                   text: 'Failed to create action: '+data.statusText,
@@ -54,19 +102,14 @@
                   layout: 'topCenter'
                 });
 			}
-		});
-	  }
+        });
+ 
+        event.preventDefault();
 
-	  function updateAction(id, data){
-		var oData = $('#actionTable').dataTable();
-		$.ajax({
-			'url' : '/admin/action/'+id,
-			'type' : 'POST',
-			'data' : data,
-			'dataType' : 'json'
-		});
-	  }
+      });
 
+
+	  // When the delete button is pushed, ask for confirmation then ajax-delete the action
 	  function deleteAction(id){
 		var oData = $('#actionTable').dataTable();
 		$.ajax({
@@ -87,6 +130,8 @@
 		});
 	  }
 
+
+		// Set up theDataTable layout with inline edit support
 		$(document).ready(function() {
     		var oTable = $('#actionTable').dataTable();
 
