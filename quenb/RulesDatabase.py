@@ -17,7 +17,7 @@ import operator
 import copy
 import time
 import traceback
-
+import re
 
 
 def setup(db):
@@ -97,6 +97,51 @@ def getActions(db):
           FROM actions
           ORDER BY title ASC
         """)]
+
+def getAction(db, id):
+    """
+    Given the QuenB database, return a single action tuple 
+    """
+    with db:
+        return [dict(row) for row in db.execute("""
+          SELECT id, module, function, args, title, description
+          FROM actions
+          WHERE id = ?
+        """, id)]
+
+def putAction(db, plugin='', args=None, title=None, description=None):
+    """
+    Given the QuenB database, create a new Action with the given settings
+    """
+    with db:
+        matches = re.match(r'^(\S+)\.([^.]+)$', plugin)
+        if matches:
+            module = matches.group(1)
+            function = matches.group(2)
+        else:
+            module = None
+            function = plugin
+
+        db.execute("""
+         INSERT INTO actions (module, function, args, title, description)
+         VALUES(?, ?, ?, ?, ?)
+        """, (module, function, args, title, description))
+
+        return [dict(row) for row in db.execute("""
+          SELECT id, module, function, args, title, description
+          FROM actions
+          WHERE id = last_insert_rowid()
+        """)]
+
+def deleteAction(db, id):
+    """
+    Given the QuenB database, delete an action
+    """
+    with db:
+        db.execute("""
+          DELETE FROM actions
+          WHERE id = ?
+        """, (id,))
             
 def updateActionField(db, action_id, field, value):
     """
