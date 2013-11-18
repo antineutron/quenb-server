@@ -12,27 +12,29 @@
 
       <table id='ruleTable'>
 	    <thead>
-          <tr><th>Priority</th><th>Rule</th><th>Action</th></tr>
+          <tr><th>Priority</th><th>Rule</th><th>Action</th><th>Delete</th></tr>
 		</thead>
 		<tbody>
         % for rule in rules:
         <tr id='{{rule['id']}}'>
 		  <td>
-		    % if rule['id'] > 0:
-		    <button class='btn btn-default glyphicon glyphicon-remove-circle' alt='Delete'
-			        onclick='deleteRule({{rule['id']}}); return false;'></button>
-			% end if
             {{rule['priority']}}
 		  </td>
           <td class='editable'>{{rule['rule']}}</td>
           <td class='action_select'>
 		    {{rule['title']}}
 		  </td>
+		  <td>
+		    % if rule['id'] > 0:
+		    <button class='btn btn-default glyphicon glyphicon-remove-circle' alt='Delete'
+			        onclick='deleteRule({{rule['id']}}); return false;'></button>
+			% end if
+		  </td>
         </tr>
 		</tbody>
         % end for
 	    <tfoot>
-          <tr><th>Priority</th><th>Rule</th><th>Action</th></tr>
+          <tr><th>Priority</th><th>Rule</th><th>Action</th><th>Delete</th></tr>
 		</tfoot>
       </table>
 
@@ -81,7 +83,9 @@
  
             success: function(data, status) {
 				d = data['rule'];
-				tblRow = [d['priority'], d['rule'], d['action_title']];
+				buttonText = "<button class='btn btn-default glyphicon glyphicon-remove-circle' alt='Delete'\n"+
+				             "       onclick='deleteRule(" + d['id'] + "); return false;'></button>";
+				tblRow = [d['priority'], d['rule'], d['action_title'], buttonText];
 				oData.fnAddData(tblRow);
 				$($target).modal('hide');
             },

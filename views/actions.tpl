@@ -11,28 +11,29 @@
 
       <table id='actionTable'>
 	    <thead>
-          <tr><th>Title</th><th>Plugin function call</th><th>Description</th></tr>
+          <tr><th>Title</th><th>Plugin function call</th><th>Description</th><th>Delete</th></tr>
 		</thead>
 		<tbody>
         % for action in actions:
         <tr id='{{action['id']}}'>
           <td>
-		    % if action['id'] > 0:
-		    <button class='btn btn-default glyphicon glyphicon-remove-circle' alt='Delete'
-			        onclick='deleteAction({{action['id']}}); return false;'></button>
-			% end if
 			<span class='editable'>{{action['title']}}</span></td>
-
           <td>
 		    <span class='select_plugin' style="display: inline">{{action['module']}}.{{action['function']}}</span>
 			(<span class='module_args'>{{action['args'] or ''}}</span>)
 	      </td>
           <td><span class='editable'>{{action['description']}}</span></td>
+		  <td>
+		    % if action['id'] > 0:
+		    <button class='btn btn-default glyphicon glyphicon-remove-circle' alt='Delete'
+			        onclick='deleteAction({{action['id']}}); return false;'></button>
+			% end if
+		  </td>
         </tr>
         % end for
 		</tbody>
 	    <tfoot>
-          <tr><th>Title</th><th>Plugin function call</th><th>Description</th></tr>
+          <tr><th>Title</th><th>Plugin function call</th><th>Description</th><th>Delete</th></tr>
 		</tfoot>
       </table>
 
@@ -89,7 +90,9 @@
  
             success: function(data, status) {
 				d = data['action'];
-				tblRow = [d['title'], d['module']+'.'+d['function']+'('+d['args']+')', d['description']];
+			    buttonText = "<button class='btn btn-default glyphicon glyphicon-remove-circle' alt='Delete'\n"+
+                             "       onclick='deleteAction(" + d['id'] + "); return false;'></button>";
+				tblRow = [d['title'], d['module']+'.'+d['function']+'('+d['args']+')', d['description'], buttonText];
 				oData.fnAddData(tblRow);
 				$($target).modal('hide');
             },
