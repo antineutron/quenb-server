@@ -1,20 +1,54 @@
 #!/usr/bin/env python
 
+import csv
+from random import randint
+
 """
 Built-in outcome functions supplied with QuenB by default.
 """
-
 def display_url(url, request, client_info):
     """
     The most common outcome, simply display a single webpage.
     """
     return ({"display_url": url}, client_info)
 
-def url_cycle(url_list, timeout, request, client_info):
+def url_cycle(url_list, request, client_info):
     """
-    Cycle through a list of webpages, whowing each one for a set time.
+    Cycle through a list of webpages, showing each one in order for a set time.
     """
-    return ({"url_cycle": url_list, "cycle_timeout": timeout}, client_info)
+
+    # Args are comma-separated, so parse them using the csv module
+    try:
+        reader = csv.reader([url_list])
+        url_list = reader.next()
+    except:
+        return ({'error', 'Failed to read URL cycle'}, client_info)
+
+    # How many requests has the client made? Use this to
+    # determine the position in the cycle. Note the -1
+    # so that the first request will pick the 0th element.
+    if 'calls' in client_info:
+        calls = int(client_info['calls']) - 1
+    else:
+        calls = 0
+    next_url = url_list[ calls % len(url_list) ]
+
+    return display_url(next_url, request, client_info)
+
+def url_cycle_random(url_list, request, client_info):
+    """
+    Cycle through a list of webpages, showing each one at random for a set time.
+    """
+    # Args are comma-separated, so parse them using the csv module
+    try:
+        reader = csv.reader([url_list])
+        url_list = reader.next()
+    except:
+        return ({'error', 'Failed to read random URL cycle'}, client_info)
+
+    next_url = url_list[ randint(0, len(url_list)-1) ]
+
+    return display_url(next_url, request, client_info)
 
 def special_show(item, request, client_info):
     """
