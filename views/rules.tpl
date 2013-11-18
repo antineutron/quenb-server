@@ -81,7 +81,7 @@
  
             success: function(data, status) {
 				d = data['rule'];
-				tblRow = [d['priority'], d['rule']+'.'+d['action_title']];
+				tblRow = [d['priority'], d['rule'], d['action_title']];
 				oData.fnAddData(tblRow);
 				$($target).modal('hide');
             },
