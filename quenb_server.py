@@ -28,15 +28,7 @@ app.install(plugin)
 
 aaa = Authentication.getAAA(USERDB_DIR)
 
-session_opts = {
-    'session.cookie_expires': True,
-    'session.encrypt_key': 'please use a random key and keep it jksdgjksfgjkbsdfg secret!',
-    'session.httponly': True,
-    'session.timeout': 3600 * 24,  # 1 day
-    'session.type': 'cookie',
-    'session.validate_key': True,
-}
-app_sessioned = SessionMiddleware(app, session_opts)
+app_sessioned = SessionMiddleware(app, SESSION_OPTS)
 
 ruler = ParseRules.QuenbRuleParser()
 
