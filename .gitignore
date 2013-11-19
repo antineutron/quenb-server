@@ -3,6 +3,7 @@
 userdb/*.json
 quenb.db
 venv
+secret_settings.py
 
 # C extensions
 *.so

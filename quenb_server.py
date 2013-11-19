@@ -21,7 +21,6 @@ from pyparsing import ParseException
 from settings import *
 
 
-
 app = bottle.Bottle()
 plugin = bottle.ext.sqlite.Plugin(dbfile=DB_PATH)
 app.install(plugin)
