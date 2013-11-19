@@ -31,8 +31,8 @@
 			% end if
 		  </td>
         </tr>
-		</tbody>
         % end for
+		</tbody>
 	    <tfoot>
           <tr><th>Priority</th><th>Rule</th><th>Action</th><th>Delete</th></tr>
 		</tfoot>
