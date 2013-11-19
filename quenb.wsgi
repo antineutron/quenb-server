@@ -10,7 +10,5 @@ sys.path.insert(0, '.')
 
 import quenb_server, settings
 
-print "Setup: {}".format(settings.DB_PATH)
-
 application = quenb_server.app_sessioned
 quenb_server.setup(settings.DB_PATH)
