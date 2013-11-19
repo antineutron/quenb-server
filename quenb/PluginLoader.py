@@ -30,4 +30,5 @@ def listAllFunctions(plugindir):
         for (fname,fun) in module_obj.__dict__.iteritems():
             if type(fun) == types.FunctionType:
                 all_modules.append(module_name+'.'+fname)
+    all_modules.sort()
     return all_modules
