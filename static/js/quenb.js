@@ -49,8 +49,8 @@ function looplet(internal_data) {
         "version": internal_data.version,
         "addr": internal_data.addr,
         "calls": internal_data.calls,
-        "window_width" : $(window).width(),
-        "window_height" : $(window).height(),
+        "window_width" : $(document).width(),
+        "window_height" : $(document).height(),
     }
     if (internal_data.token) {
         variables.token = internal_data.token;
@@ -161,31 +161,32 @@ function looplet2(data, internal_data) {
     }, sleep_time);
 }
 
-try {
 // MAIN BODY STARTS HERE
-    var internal_data = {
-        'calls': 0,
-        'addr': addr,
-        'cid': cid,
-        'version': version,
-        'client_query': client_query,
-    };
-    looplet(internal_data);
-} catch (e) {
-    // We will flash an error message up, and then refresh the page
-    // in 30 seconds.
-    $('.special').addClass('hidden');
-    $('.special#tvstatic').removeClass('hidden');
-
-    noty({
-        type: 'error',
-        text: e,
-        layout: 'topCenter'
-    });
-
-    // In 30 seconds, refresh (without the cache) the page.
-    setTimeout(function() {
-        location.reload(true);
-    }, 30000);
-}
-
+$(document).ready(function(){
+    try {
+        var internal_data = {
+            'calls': 0,
+            'addr': addr,
+            'cid': cid,
+            'version': version,
+            'client_query': client_query,
+        };
+        looplet(internal_data);
+    } catch (e) {
+        // We will flash an error message up, and then refresh the page
+        // in 30 seconds.
+        $('.special').addClass('hidden');
+        $('.special#tvstatic').removeClass('hidden');
+    
+        noty({
+            type: 'error',
+            text: e,
+            layout: 'topCenter'
+        });
+    
+        // In 30 seconds, refresh (without the cache) the page.
+        setTimeout(function() {
+            location.reload(true);
+        }, 30000);
+    }
+});
