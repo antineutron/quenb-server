@@ -1,22 +1,5 @@
 #!/usr/bin/env python
 
-import json
-import random
-import string
-import hashlib
-import hmac
-import argparse
-import collections
-import sqlite3
-import datetime
-import os
-import os.path
-import csv
-import sys
-import operator
-import copy
-import time
-import traceback
 import re
 
 
