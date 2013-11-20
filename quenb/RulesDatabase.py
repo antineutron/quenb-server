@@ -25,7 +25,7 @@ def setup(db):
     db.execute("""INSERT OR IGNORE INTO actions
                (id, module, function, args, title, description)
                VALUES (
-                 0, 'quenb-builtin', 'display_image', 'http://placekitten.com/1680/1050',
+                 0, 'quenb-builtin', 'display_image', 'http://placekitten.com/$window_width/$window_height',
                  'Default', 'Default rule if nothing else matches'
                )""")
 
