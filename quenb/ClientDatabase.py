@@ -72,7 +72,18 @@ def getClientDetails(db, request, session, query):
     # Automatically update the client database so we know when they were last seen
     updateClient(db, cid, addr, hostname, mac, version)
 
-    return (cid, addr, hostname, mac, version)
+    # Window dimensions as reported by the client
+    if 'window_width' in query:
+        window_width = query.window_width
+    else:
+        window_width = None
+    if 'window_height' in query:
+        window_height = query.window_height
+    else:
+        window_height = None
+        
+
+    return (cid, addr, hostname, mac, version, window_width, window_height)
 
 def updateClient(db, cid, addr, hostname, mac, version):
     with db:

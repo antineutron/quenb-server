@@ -3,27 +3,19 @@
 Built-in outcome functions supplied with QuenB by default. Should do enough for most standard displays.
 """
 
-import csv
 from random import randint
 
 
-def display_url(url, request, client_info):
+def display_url(args, request, client_info):
     """
     The most common outcome, simply display a single webpage.
     """
-    return ({"display_url": url}, client_info)
+    return ({"display_url": args[0]}, client_info)
 
 def url_cycle(url_list, request, client_info):
     """
     Cycle through a list of webpages, showing each one in order for a set time.
     """
-
-    # Args are comma-separated, so parse them using the csv module
-    try:
-        reader = csv.reader([url_list])
-        url_list = reader.next()
-    except:
-        return ({'error', 'Failed to read URL cycle'}, client_info)
 
     # How many requests has the client made? Use this to
     # determine the position in the cycle. Note the -1
@@ -40,27 +32,23 @@ def url_cycle_random(url_list, request, client_info):
     """
     Cycle through a list of webpages, showing each one at random for a set time.
     """
-    # Args are comma-separated, so parse them using the csv module
-    try:
-        reader = csv.reader([url_list])
-        url_list = reader.next()
-    except:
-        return ({'error', 'Failed to read random URL cycle'}, client_info)
 
     next_url = url_list[ randint(0, len(url_list)-1) ]
 
     return display_url(next_url, request, client_info)
 
-def special_show(item, request, client_info):
+def special_show(args, request, client_info):
     """
     Shows a special item client-side (usually a placeholder image).
     """
+    item = args[0]
     return ({"special_show": item}, client_info)
 
-def display_image(image_url, request, client_info):
+def display_image(args, request, client_info):
     """
     Shows an image loaded via a URL (it will be displayed fullscreen like a special_show image).
     """
+    image_url = args[0]
     return ({"display_image": image_url}, client_info)
 
 def show_logo(args, request, client_info):
@@ -69,16 +57,18 @@ def show_logo(args, request, client_info):
     """
     return display_image('/static/mandelbrot.jpg', request, client_info)
 
-def show_error(message, request, client_info):
+def show_error(args, request, client_info):
     """
     Displays an error notification at the top of the screen.
     """
+    message = args[0]
     return({"error": message}, client_info)
 
-def show_info(message, request, client_info):
+def show_info(args, request, client_info):
     """
     Displays an informational notification at the top of the screen.
     """
+    message = args[0]
     return({"info": message}, client_info)
 
 def show_clientid(args, request, client_info):

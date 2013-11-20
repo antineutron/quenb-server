@@ -97,7 +97,7 @@ def get_webclient(db):
 
     # Get (or create) the client ID
     session = bottle.request.environ['beaker.session']
-    (cid, addr, hostname, mac, version) = ClientDatabase.getClientDetails(db, bottle.request, session, bottle.request.query)
+    (cid, addr, hostname, mac, version, window_width, window_height) = ClientDatabase.getClientDetails(db, bottle.request, session, bottle.request.query)
     session.save()
 
     return {
@@ -115,7 +115,7 @@ def get_display(db):
 
     # Get the client's details
     session = bottle.request.environ['beaker.session']
-    (cid, addr, hostname, mac, version) = ClientDatabase.getClientDetails(db, bottle.request, session, bottle.request.query)
+    (cid, addr, hostname, mac, version, window_width, window_height) = ClientDatabase.getClientDetails(db, bottle.request, session, bottle.request.query)
     session.save()
 
     # Get datetime as a list of numbers
@@ -131,7 +131,9 @@ def get_display(db):
         'mac':      mac,
         'calls':    bottle.request.query.calls,
         'datetime': dt_list,
-        'unixtime': time.mktime(now.timetuple())
+        'unixtime': time.mktime(now.timetuple()),
+        'window_width' : window_width,
+        'window_height' : window_height,
     }
 
 
@@ -196,6 +198,17 @@ def get_admin(db):
         'clients' : ClientDatabase.getClients(db),
     }
 
+@app.get('/admin/help', template='help')
+@app.get('/admin/help/', template='help')
+def get_admin_help():
+    """
+    Help pages for the admin interface. Explains how the whole thing works and how to do stuff.
+    You know what a help page is.
+    """
+    aaa.require(role='admin', fail_redirect='/')
+    return {
+        'current_user' : aaa.current_user,
+    }
 
 @app.get('/admin/actions')
 @app.get('/admin/actions/')
