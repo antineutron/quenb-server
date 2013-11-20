@@ -7,3 +7,4 @@ distribute==0.6.24
 pycrypto==2.6.1
 pyparsing==2.0.1
 wsgiref==0.1.2
+ipaddress==1.0.6
