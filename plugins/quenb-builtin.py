@@ -1,11 +1,12 @@
 #!/usr/bin/env python
+"""
+Built-in outcome functions supplied with QuenB by default. Should do enough for most standard displays.
+"""
 
 import csv
 from random import randint
 
-"""
-Built-in outcome functions supplied with QuenB by default.
-"""
+
 def display_url(url, request, client_info):
     """
     The most common outcome, simply display a single webpage.
