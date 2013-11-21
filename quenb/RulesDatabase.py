@@ -96,7 +96,7 @@ def postRule(db, id, data):
         # Delete anything we don't like the look of
         for field in data:
             if field not in ['priority', 'action', 'rule']:
-                data.delete(field)
+                del data[field]
 
         # Build a list of placeholders and values for the SET key=value, key=value clause
         placeholders = []
@@ -178,6 +178,17 @@ def getAction(db, id):
           WHERE id = ?
         """, id)]
 
+def _plugin2functions(plugin_spec):
+    matches = re.match(r'^(\S+)\.([^.]+)$', plugin_spec)
+    if matches:
+        module = matches.group(1)
+        function = matches.group(2)
+    else:
+        module = None
+        function = data['plugin']
+ 
+    return (module, function)
+
 def putAction(db, data):
     """
     Given the QuenB database, create a new Action with the given settings
@@ -187,13 +198,7 @@ def putAction(db, data):
             if needed not in data or not data[needed]:
                 data[needed] = ''
 
-        matches = re.match(r'^(\S+)\.([^.]+)$', data['plugin'])
-        if matches:
-            module = matches.group(1)
-            function = matches.group(2)
-        else:
-            module = None
-            function = data['plugin']
+        (module, function) = _plugin2functions(data['plugin'])
 
         db.execute("""
          INSERT INTO actions (module, function, args, title, description)
@@ -206,6 +211,52 @@ def putAction(db, data):
           WHERE id = last_insert_rowid()
         """)
         return dict(c.fetchone())
+
+def postAction(db, id, data):
+    """
+    Given the QuenB database, update an Action with the given settings
+    """
+    with db:
+
+        # Delete anything we don't like the look of
+        for field in data:
+            if field not in ['plugin', 'args', 'title', 'description']:
+                del data[field]
+
+        from pprint import pprint
+
+        (module, function) = _plugin2functions(data['plugin'])
+
+        del data['plugin']
+        data['module'] = module
+        data['function'] = function
+
+        # Build a list of placeholders and values for the SET key=value, key=value clause
+        placeholders = []
+        fields_values = []
+        for field, value in data.iteritems():
+            placeholders.append('{} = ?'.format(field))
+            fields_values.append(value)
+        placeholders = ', '.join(placeholders)
+
+        db.execute("""
+         UPDATE actions
+         SET {}
+         WHERE id = ?
+        """.format(placeholders), fields_values + [id])
+
+        c = db.execute("""
+          SELECT id, module||'.'||function as plugin, args, title, description
+          FROM actions
+          WHERE id = ?
+        """, (id,))
+
+        row = c.fetchone()
+
+        if row:
+            return dict(row)
+        else:
+            return None
 
 def deleteAction(db, id):
     """
