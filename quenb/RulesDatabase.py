@@ -223,13 +223,12 @@ def postAction(db, id, data):
             if field not in ['plugin', 'args', 'title', 'description']:
                 del data[field]
 
-        from pprint import pprint
+        if 'plugin' in data:
+            (module, function) = _plugin2functions(data['plugin'])
 
-        (module, function) = _plugin2functions(data['plugin'])
-
-        del data['plugin']
-        data['module'] = module
-        data['function'] = function
+            del data['plugin']
+            data['module'] = module
+            data['function'] = function
 
         # Build a list of placeholders and values for the SET key=value, key=value clause
         placeholders = []
