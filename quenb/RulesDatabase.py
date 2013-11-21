@@ -70,7 +70,7 @@ def putRule(db, data):
             if needed not in data or not data[needed]:
                 data[needed] = ''
 
-        db.execute("""
+        ok = db.execute("""
          INSERT INTO rules (priority, rule, action)
          VALUES(?, ?, ?)
         """, (data['priority'], data['rule'], data['action']))
@@ -80,7 +80,50 @@ def putRule(db, data):
           FROM rules INNER JOIN actions ON(actions.id = rules.action)
           WHERE rules.id = last_insert_rowid()
         """)
-        return dict(c.fetchone())
+        row = c.fetchone()
+
+        if row:
+            return dict(row)
+        else:
+            return None
+
+def postRule(db, id, data):
+    """
+    Given the QuenB database, update a Rule with the given settings
+    """
+    with db:
+
+        # Delete anything we don't like the look of
+        for field in data:
+            if field not in ['priority', 'action', 'rule']:
+                data.delete(field)
+
+        # Build a list of placeholders and values for the SET key=value, key=value clause
+        placeholders = []
+        fields_values = []
+        for field, value in data.iteritems():
+            placeholders.append('{} = ?'.format(field))
+            fields_values.append(value)
+        placeholders = ', '.join(placeholders)
+
+        db.execute("""
+         UPDATE rules
+         SET {}
+         WHERE id = ?
+        """.format(placeholders), fields_values + [id])
+
+        c = db.execute("""
+          SELECT rules.id as id, priority, rule, actions.id as action_id, actions.title as action_title
+          FROM rules INNER JOIN actions ON(actions.id = rules.action)
+          WHERE rules.id = ?
+        """, (id,))
+
+        row = c.fetchone()
+
+        if row:
+            return dict(row)
+        else:
+            return None
 
 def deleteRule(db, id):
     """
