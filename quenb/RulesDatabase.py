@@ -87,16 +87,18 @@ def putRule(db, data):
         else:
             return None
 
-def postRule(db, id, data):
+def postRule(db, id, _data):
     """
     Given the QuenB database, update a Rule with the given settings
     """
     with db:
 
         # Delete anything we don't like the look of
-        for field in data:
-            if field not in ['priority', 'action', 'rule']:
-                del data[field]
+        data = {}
+        for field in _data:
+            fieldlc = field.lower().strip()
+            if fieldlc in ['priority', 'action', 'rule']:
+                data[fieldlc] = _data[field]
 
         # Build a list of placeholders and values for the SET key=value, key=value clause
         placeholders = []
