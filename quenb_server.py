@@ -264,7 +264,10 @@ def put_admin_action(db):
     """
     """
     aaa.require(role='admin', fail_redirect='/')
-    action = RulesDatabase.putAction(db, bottle.request.POST)
+    data = bottle.request.POST
+    if bottle.request.json:
+        data = bottle.request.json
+    action = RulesDatabase.putAction(db, data)
     return {
       'action' : action,
     }
@@ -274,7 +277,10 @@ def post_admin_action(db, id):
     """
     """
     aaa.require(role='admin', fail_redirect='/')
-    action = RulesDatabase.postAction(db, id, bottle.request.POST)
+    data = bottle.request.POST
+    if bottle.request.json:
+        data = bottle.request.json
+    action = RulesDatabase.postAction(db, id, data)
     return {'action' : action}
 
 @app.delete('/admin/action/:id')
@@ -344,7 +350,10 @@ def put_admin_rule(db):
     """
     """
     aaa.require(role='admin', fail_redirect='/')
-    rule = RulesDatabase.putRule(db, bottle.request.POST)
+    data = bottle.request.POST
+    if bottle.request.json:
+        data = bottle.request.json
+    rule = RulesDatabase.putRule(db, data)
     return {
       'rule' : rule,
     }
@@ -354,7 +363,10 @@ def post_admin_rule(db, id):
     """
     """
     aaa.require(role='admin', fail_redirect='/')
-    rule = RulesDatabase.postRule(db, id, bottle.request.POST)
+    data = bottle.request.POST
+    if bottle.request.json:
+        data = bottle.request.json
+    rule = RulesDatabase.postRule(db, id, data)
     return {'rule' : rule}
 
 @app.delete('/admin/rule/:id')
@@ -394,7 +406,7 @@ def get_admin_plugin_functions():
 
 
 
-### Client API functions ###
+### Webclient API functions ###
 
 @app.get('/api/ping')
 def get_api_ping():
