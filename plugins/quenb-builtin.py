@@ -78,7 +78,7 @@ def show_clientid(args, request, client_info):
     if 'cid' in client_info:
         cid = client_info['cid']
     else:
-        mac = '(unknown)'
+        cid = '(unknown)'
     return({"info": "Client ID: {}".format(cid)}, client_info)
 
 def show_mac(args, request, client_info):
@@ -90,3 +90,25 @@ def show_mac(args, request, client_info):
     else:
         mac = '(unknown)'
     return({"info": "MAC address: {}".format(mac)}, client_info)
+
+def set_clientvar(args, request, client_info):
+    """
+    Sets a specific client info key/value pair, e.g. set cid to "display-1"
+    """
+    if len(args) > 1:
+        client_info[args[0]] = args[1]
+
+    return({}, client_info)
+
+def set_clientid(args, request, client_info):
+    """
+    Sets the client ID to a new value
+    """
+    return set_clientvar(['cid', args[0]], request, client_info)
+
+def set_clientgroup(args, request, client_info):
+    """
+    Assign the client to a specific group
+    """
+    return set_clientvar(['group', args[0]], request, client_info)
+
