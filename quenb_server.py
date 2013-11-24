@@ -60,6 +60,7 @@ def setup(db_path="quenb.db"):
     with db:
         RulesDatabase.setup(db)
         ClientDatabase.setup(db)
+    return db
 
 ### Static file handlers ###
 
@@ -162,6 +163,7 @@ def get_display(db):
         if result:
             (client_code, client_info) = ClientResponse.runAction(PLUGIN_DIR, rule['module'], rule['function'], rule['args'], bottle.request, client_info)
             response.update(client_code)
+            print "Ran rule: {} and got data: {}".format(rule_text, client_code)
 
     return json.dumps(response)
 
@@ -262,17 +264,23 @@ def put_admin_action(db):
     """
     """
     aaa.require(role='admin', fail_redirect='/')
-    action = RulesDatabase.putAction(db, bottle.request.POST)
+    data = bottle.request.POST
+    if bottle.request.json:
+        data = bottle.request.json
+    action = RulesDatabase.putAction(db, data)
     return {
       'action' : action,
     }
 
 @app.post('/admin/action/:id')
-def post_admin_action(db):
+def post_admin_action(db, id):
     """
     """
     aaa.require(role='admin', fail_redirect='/')
-    action = RulesDatabase.postAction(db, id, bottle.request.POST)
+    data = bottle.request.POST
+    if bottle.request.json:
+        data = bottle.request.json
+    action = RulesDatabase.postAction(db, id, data)
     return {'action' : action}
 
 @app.delete('/admin/action/:id')
@@ -342,17 +350,23 @@ def put_admin_rule(db):
     """
     """
     aaa.require(role='admin', fail_redirect='/')
-    rule = RulesDatabase.putRule(db, bottle.request.POST)
+    data = bottle.request.POST
+    if bottle.request.json:
+        data = bottle.request.json
+    rule = RulesDatabase.putRule(db, data)
     return {
       'rule' : rule,
     }
 
 @app.post('/admin/rule/:id')
-def post_admin_rule(db):
+def post_admin_rule(db, id):
     """
     """
     aaa.require(role='admin', fail_redirect='/')
-    rule = RulesDatabase.postRule(db, id, bottle.request.POST)
+    data = bottle.request.POST
+    if bottle.request.json:
+        data = bottle.request.json
+    rule = RulesDatabase.postRule(db, id, data)
     return {'rule' : rule}
 
 @app.delete('/admin/rule/:id')
@@ -369,13 +383,8 @@ def delete_admin_rule(db, id):
     return {}
 
 
-
-
-
-
-
-@app.get('/admin/api/plugin_functions/')
-def get_admin_api_plugin_functions():
+@app.get('/admin/plugin_functions/')
+def get_admin_plugin_functions():
     """
     List all available plugin functions (as modulename.function)
     """
@@ -397,7 +406,7 @@ def get_admin_api_plugin_functions():
 
 
 
-### Client API functions ###
+### Webclient API functions ###
 
 @app.get('/api/ping')
 def get_api_ping():
@@ -408,105 +417,14 @@ def get_api_version(db):
     auth_check(db)
     return json.dumps(API_VERSION)
 
-def database_dump(db, tablename):
-    # Not safe with user input
-    L = []
-    with db:
-        for tuple in db.execute("SELECT * FROM {}".format(tablename)):
-            D = dict(zip(tuple.keys(), tuple))
-            L.append(D)
-    return L
-
-def database_update(db, tablename, id, item, acceptable_keys):
-    # db - database connection
-    # tablename - the name of the table
-    # id - the item to be updated
-    # item - the dict of key->value pairs for the update
-    # acceptable_keys - a list of keys that are permitted to prevent injection
-    with db:
-        for key in item.keys():
-            if key not in acceptable_keys:
-                bottle.abort(400, "Not an acceptable key.")
-
-        if id is not None:
-            # Determine if item in present in table.
-            stmt = "SELECT * FROM {} WHERE id=?".format(tablename)
-            present = False
-            for _ in db.execute(stmt, (id,)):
-                present = True
-                break
-        else:
-            present = False
-
-        if not present:
-            if 'id' in item.keys():
-                del item['id']
-            # INSERT
-            keys, values = item.keys(), item.values()
-
-            params = ','.join(keys)
-            qs = ','.join('?' for i in range(len(values)))
-
-            stmt = "INSERT INTO {table} ({params}) VALUES ({qs})"
-            stmt = stmt.format(table=tablename, params=params, qs=qs)
-            db.execute(stmt, tuple(values))
-        else:
-            # UPDATE
-            for key, value in item.items():
-                stmt = "UPDATE {} SET {}=? WHERE id=?".format(tablename, key)
-                db.execute(stmt, (value, id))
-
-#@app.get('/api/clients')
-#def get_api_clients(db):
-#    auth_check(db)
-#    return json.dumps(database_dump(db, "clients"))
-
-#@app.get('/api/actions')
-#def get_api_actions(db):
-#    auth_check(db)
-#    return json.dumps(database_dump(db, "actions"))
-
-@app.put('/api/actions')
-@app.put('/api/actions/<id>')
-def put_api_actions(db, id=None):
-    auth_check(db)
-    database_update(db, 'actions', id, dict(bottle.request.forms),
-                    ['code', 'title','description', 'id'])
-    return json.dumps(None)
-
-@app.delete('/api/actions/<id>')
-def delete_api_actions(db, id=None):
-    auth_check(db)
-    with db:
-        db.execute("DELETE FROM actions WHERE id=?", (id,))
-    return json.dumps(None)
 
 
-@app.get('/api/rules')
-def get_api_rules(db):
-    auth_check(db)
-    L = database_dump(db, "rules")
-    L.sort(key=operator.itemgetter('priority'))
-    return json.dumps(L)
 
-@app.put('/api/rules')
-@app.put('/api/rules/<id>')
-def put_api_rules(db, id=None):
-    auth_check(db)
-    database_update(db, "rules", id, dict(bottle.request.forms),
-                    ['priority','rule','action', 'id'])
-    return json.dumps(None)
-
-@app.delete('/api/rules/<id>')
-def delete_api_rules(db, id=None):
-    auth_check(db)
-    with db:
-        db.execute("DELETE FROM rules WHERE id=?", (id,))
-    return json.dumps(None)
 
 
 
 if __name__ == '__main__':
+
     p = argparse.ArgumentParser()
     p.add_argument('-d','--debug',action='store_true')
     p.add_argument('--host',default='localhost')

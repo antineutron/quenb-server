@@ -18,11 +18,13 @@
         % for rule in rules:
         <tr id='{{rule['id']}}'>
 		  <td>
-            {{rule['priority']}}
+		    <span class='editable_priority'>{{rule['priority']}}</span>
 		  </td>
-          <td class='editable'>{{rule['rule']}}</td>
-          <td class='action_select'>
-		    {{rule['title']}}
+          <td>
+            <span class='editable_rule'>{{rule['rule']}}</span>
+		  </td>
+          <td>
+  		    <span class='editable_action'>{{rule['title']}}</span>
 		  </td>
 		  <td>
 		    % if rule['id'] > 0:
@@ -109,13 +111,13 @@
 	  function deleteRule(id){
 		var oData = $('#ruleTable').dataTable();
 		$.ajax({
-			'url' : '/admin/rule/'+id,
-			'type' : 'DELETE',
-			'dataType' : 'json',
-			'success' : function(data){
+			url : '/admin/rule/'+id,
+			type : 'DELETE',
+			dataType : 'json',
+			success : function(data){
 				oData.fnDeleteRow($('tr #'+id));
 			},
-			'error' : function(data){
+			error : function(data){
 				noty({
                   type: 'error',
                   text: 'Failed to delete rule: '+data.statusText,
@@ -136,7 +138,7 @@
 
     		// Submit function for inline editing
     		var inline_submit = function ( value, settings ) {
-    			ruleID = this.parentNode.getAttribute('id');
+    			ruleID = this.parentNode.parentNode.getAttribute('id');
                 fieldPosition = oTable.fnGetPosition( this )[2];
                 fieldName = $('#ruleTable thead th')[fieldPosition].innerHTML.toLowerCase();
                 return {
@@ -152,35 +154,30 @@
     		};
 
 			// Make text fields in-place editable
-            oTable.$('td.editable').editable( '/admin/actions/update_field', {
+            oTable.$('.editable_priority').editable( function(value, settings){
+				ruleID = this.parentNode.parentNode.getAttribute('id');
+				$.ajax({
+					url  : '/admin/rule/'+ruleID,
+					type : 'POST',
+	//				contentType: 'application/json; charset=UTF-8',
+					dataType: 'json',
+					data : {priority: value},
+					success: function(){
+						alert("Updated OK");
+					},
+					fail: function(){
+						alert("Failed :-(");
+					}
+				});
+            } );
+            /*oTable.$('td.editable_priority').editable( '/admin/action/', {
 				"type" : 'textarea',
                 "callback": inline_update,
                 "submitdata": inline_submit,
                 "width": "100%",
 				"onblur" : "submit"
-            } );
+            } );*/
 
-			// Make integer fields spinners
-            oTable.$('td.spinner').editable( '/admin/actions/update_field', {
-				"type" : "text",
-				//loadurl : "/admin/api/actions/",
-				//"data" : {"first" : "First", "second": "Second"},
-                "callback": inline_update,
-                "submitdata": inline_submit,
-                "width": "100%",
-				"onblur" : "submit"
-            } );
-
-			// Make selectable fields select lists
-            oTable.$('td.action_select').editable( '/admin/actions/update_field', {
-				"type" : "select",
-				"loadurl" : "/admin/api/actions/",
-				//"data" : {"1" : "First", "2": "Second"},
-                "callback": inline_update,
-                "submitdata": inline_submit,
-                "width": "100%",
-				"onblur" : "submit"
-            } );
         } );
       </script>
 
