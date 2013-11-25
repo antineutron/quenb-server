@@ -103,7 +103,8 @@ def get_webclient(db):
 
     return {
         'client_id'       : cid,
-        'addr'            : bottle.request.remote_addr,
+        'addr'            : addr,
+        'hostname'        : hostname,
         'query_variables' : dict(bottle.request.query),
     }
 
@@ -128,6 +129,7 @@ def get_display(db):
         'cid':      cid,
         'version':  version,
         'addr':     addr,
+        'hostname': hostname,
         'location': bottle.request.query.location,
         'mac':      mac,
         'calls':    bottle.request.query.calls,
@@ -151,9 +153,12 @@ def get_display(db):
         # the set that is sent.
 
         # Parse the rule and evaluate
+        #print "Checking rule ID: {} Priority: {} (rule test is: [{}])".format(rule['id'], rule['priority'], rule['rule'])
         rule_text = rule['rule']
         try:
+        #    print "Evaluating against client info [{}]...".format(client_info)
             result = ruler.evaluateRule(rule_text, client_info)
+        #    print "Finished evaluating, result was: {}".format(result)
         except ParseException as e:
             error("Error parsing rule {},{}".format(rule_text, client_info))
             traceback.print_exc()
@@ -163,7 +168,7 @@ def get_display(db):
         if result:
             (client_code, client_info) = ClientResponse.runAction(PLUGIN_DIR, rule['module'], rule['function'], rule['args'], bottle.request, client_info)
             response.update(client_code)
-            print "Ran rule: {} and got data: {}".format(rule_text, client_code)
+        #    print "Ran rule: {} and got data: {}".format(rule_text, client_code)
 
     return json.dumps(response)
 
