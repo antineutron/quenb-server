@@ -205,6 +205,9 @@ class QuenbRuleParser:
     
     
     def test(self):
+        """
+        Not much of a test suite really, I'm sure somebody will care. Someday...
+        """
         tests = (
           ("int", self.comparable, "12"),
           ("negative int", self.comparable, "-12"),
@@ -242,7 +245,6 @@ class QuenbRuleParser:
         
         
         teststr = "(A == B or C == D)  or E > 5 AND F == G or (H == 1 or b == 'foo')"
-        teststr = "true"
         testvars = {
             'A' : 5,
             'B' : 5,
@@ -260,7 +262,7 @@ class QuenbRuleParser:
         rule = self.expression.parseString(teststr)[0]
         print rule
 
-        #print rule.evaluate(testvars)
+        print rule.evaluate(testvars)
         
         for testname, tester, test in tests:
             try:
