@@ -24,9 +24,10 @@ def url_cycle(url_list, request, client_info):
         calls = int(client_info['calls']) - 1
     else:
         calls = 0
+
     next_url = url_list[ calls % len(url_list) ]
 
-    return display_url(next_url, request, client_info)
+    return display_url([next_url], request, client_info)
 
 def url_cycle_random(url_list, request, client_info):
     """

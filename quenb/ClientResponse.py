@@ -109,7 +109,7 @@ def _parseArgs(function_args, client_info):
     # Split args using the csv module
     arg_list = []
     try:
-        reader = csv.reader([url_list])
+        reader = csv.reader([function_args])
         _arg_list = reader.next()
     except:
         _arg_list = [function_args]
@@ -130,4 +130,10 @@ def _parseArgs(function_args, client_info):
     return arg_list
 
 
+if __name__ == '__main__':
+    args = 'http://www.youtube.com/user/ecsnews, https://devecs.ecs.soton.ac.uk/, https://society.ecs.soton.ac.uk/events, http://www.ieee.ecs.soton.ac.uk/events.php, http://ecswomen.ecs.soton.ac.uk/links/events, https://www.studentrobotics.org/news/, http://openweathermap.org/, http://www.events.soton.ac.uk/, http://users.ecs.soton.ac.uk/bk8g11/league'
 
+    parsed = _parseArgs(args, {})
+
+    from pprint import pprint
+    pprint(parsed)
