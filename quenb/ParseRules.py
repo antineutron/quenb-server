@@ -190,8 +190,22 @@ class QuenbRuleParser:
         ]
     )
  
+    def checkRule(self, rule):
+        """
+        Checks whether a rule is valid.
+        """
+        try:
+            self.expression.parseString(rule)
+            return True
+        except ParseException:
+            return False
+
     def evaluateRule(self, rule, variables):
-        
+        """
+        Parse a rule, then given a set of variable bindings, evaluate it to
+        True or False.
+        """
+
         # Seems obvious... no rule text, evaluate to false
         if rule == None:
             return false

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import re
-
+from ParseRules import QuenbRuleParser
+from bottle import abort
 
 def setup(db):
     """
@@ -70,6 +71,11 @@ def putRule(db, data):
             if needed not in data or not data[needed]:
                 data[needed] = ''
 
+        parser = QuenbRuleParser()
+        rule = data['rule']
+        if not parser.checkRule(rule):
+            abort(400, 'Invalid rule ysntax')
+
         ok = db.execute("""
          INSERT INTO rules (priority, rule, action)
          VALUES(?, ?, ?)
@@ -99,6 +105,11 @@ def postRule(db, id, _data):
             fieldlc = field.lower().strip()
             if fieldlc in ['priority', 'action', 'rule']:
                 data[fieldlc] = _data[field]
+
+        parser = QuenbRuleParser()
+        rule = data['rule']
+        if not parser.checkRule(rule):
+            abort(400, 'Invalid rule ysntax')
 
         # Build a list of placeholders and values for the SET key=value, key=value clause
         placeholders = []
