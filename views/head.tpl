@@ -32,11 +32,10 @@
           </ul>
 		  % if defined('current_user') and current_user:
           <form class="navbar-form navbar-right" method="POST" action="/logout">
-		     <div class="form-group nav">
-		    Logged in as {{current_user.username}}
-			</div>
+		    <strong>Logged in as {{current_user.username}}</strong>
 		     <div class="form-group">
             <button type="submit" class="btn btn-success">Sign out</button>
+			<em><a href='/admin/password_reset'>Change password</a></em>>
 			</div>
           </form>
 		  % else:

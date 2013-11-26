@@ -217,6 +217,48 @@ def get_admin_help():
         'current_user' : aaa.current_user,
     }
 
+@app.get('/admin/password_reset', template='passchange')
+@app.get('/admin/password_reset/', template='passchange')
+def get_admin_password_reset(db):
+    """
+    Password reset form.
+    """
+    aaa.require(role='admin', fail_redirect='/')
+    return {
+        'current_user' : aaa.current_user,
+    }
+
+@app.post('/admin/password_reset', template='passchange')
+@app.post('/admin/password_reset/', template='passchange')
+def post_admin_password_reset(db):
+    """
+    Password reset backend.
+    """
+    aaa.require(role='admin', fail_redirect='/')
+    current_user = aaa.current_user
+    current_password = post_get('passcurrent')
+    new_password = post_get('passnew')
+    confirmation = post_get('passconfirm')
+    # FIXME eww.
+    current_hash = aaa._store.users[current_user.username]['hash']
+
+    # TODO proper error reporting and form highlighting and all that
+    if not current_password or not new_password or not confirmation:
+        abort(400, "Didn't get all paramters, fill in the damn form")
+
+    # Verify current password is correct FIXME: this is fudgy
+    elif not aaa._verify_password(current_user.username, current_password, current_hash):
+        abort(400, "Current password was incorrect")
+
+    elif new_password != confirmation:
+        abort(400, "New password and confirmation do not match")
+    
+    current_user.update(pwd=confirmation)
+
+    return {
+        'current_user' : current_user,
+    }
+
 @app.get('/admin/actions')
 @app.get('/admin/actions/')
 def get_admin_actions(db):
@@ -433,9 +475,10 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('-d','--debug',action='store_true')
     p.add_argument('--host',default='localhost')
+    p.add_argument('--port',default=25009)
 
     ns = p.parse_args()
     setup(db_path=DB_PATH)
     bottle.debug(ns.debug)
 
-    bottle.run(app_sessioned, host=ns.host, port=25009)
+    bottle.run(app_sessioned, host=ns.host, port=ns.port)
