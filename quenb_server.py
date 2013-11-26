@@ -126,17 +126,23 @@ def get_display(db):
                now.second, now.microsecond]
 
     client_info = {
-        'cid':      cid,
-        'version':  version,
-        'addr':     addr,
-        'hostname': hostname,
-        'location': bottle.request.query.location,
-        'mac':      mac,
-        'calls':    bottle.request.query.calls,
-        'datetime': dt_list,
-        'unixtime': time.mktime(now.timetuple()),
-        'window_width' : window_width,
-        'window_height' : window_height,
+        'cid':           cid,
+        'version':       version,
+        'addr':          addr,
+        'hostname':      hostname,
+        'location':      bottle.request.query.location,
+        'mac':           mac,
+        'calls':         bottle.request.query.calls,
+        'datetime':      dt_list,
+        'unixtime':      time.mktime(now.timetuple()),
+        'time_year':     now.year,
+        'time_month':    now.month,
+        'time_day':      now.day,
+        'time_hour':     now.hour,
+        'time_minute':   now.minute,
+        'time_second':   now.second,
+        'window_width':  window_width,
+        'window_height': window_height,
     }
 
 
