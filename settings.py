@@ -1,17 +1,18 @@
 #!/usr/bin/env python
-
+import os.path
+basedir = os.path.dirname(__file__)
 
 # Server-side plugin directory
-PLUGIN_DIR = './plugins'
+PLUGIN_DIR = basedir+'/plugins'
 
 # Where static files are stored
-STATIC_FILES = './static'
+STATIC_FILES = basedir+'/static'
 
 # Directory for the user "database" (json files for use with Cork)
-USERDB_DIR = './userdb'
+USERDB_DIR = basedir+'/userdb'
 
 # Where to store the rules/outcomes database
-DB_PATH = 'quenb.db'
+DB_PATH = basedir+'/quenb.db'
 
 # Session options (mostly used for the admin interface)
 SESSION_OPTS = {
