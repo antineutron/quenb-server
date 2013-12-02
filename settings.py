@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import os.path
-basedir = os.path.dirname(__file__)
+from os.path import dirname, abspath
+basedir = abspath(dirname(__file__))
 
 # Server-side plugin directory
 PLUGIN_DIR = basedir+'/plugins'
@@ -13,6 +13,8 @@ USERDB_DIR = basedir+'/userdb'
 
 # Where to store the rules/outcomes database
 DB_PATH = basedir+'/quenb.db'
+
+print "Starting with DB path: {}".format(DB_PATH)
 
 # Session options (mostly used for the admin interface)
 SESSION_OPTS = {
