@@ -182,13 +182,13 @@ class QuenbRuleParser:
     
     
     # Boolean expressions with operator precedence
-    expression = exp_boolean | infixNotation( exp_boolean,
+    expression = infixNotation( exp_boolean,
         [
             (op_not, 1, opAssoc.RIGHT, BoolNot),
             (op_and, 2, opAssoc.LEFT,  BoolAnd),
             (op_or,  2, opAssoc.LEFT,  BoolOr),
         ]
-    )
+    ) | exp_boolean
  
     def checkRule(self, rule):
         """
@@ -277,6 +277,11 @@ class QuenbRuleParser:
         print rule
 
         print rule.evaluate(testvars)
+
+        rule = self.expression.parseString("hostname == 'fooberry.local' or hostname == 'shoeberry.local' or hostname == 'fireberry.local'");
+        print rule[0].evaluate({'hostname' : 'fooberry.local'})
+        print rule[0].evaluate({'hostname' : 'shoeberry.local'})
+        print rule[0].evaluate({'hostname' : 'fireberry.local'})
         
         for testname, tester, test in tests:
             try:
