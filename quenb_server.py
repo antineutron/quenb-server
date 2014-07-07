@@ -250,7 +250,7 @@ def post_admin_password_reset(db):
 
     # TODO proper error reporting and form highlighting and all that
     if not current_password or not new_password or not confirmation:
-        abort(400, "Didn't get all paramters, fill in the damn form")
+        abort(400, "Didn't get all parameters, fill in the damn form")
 
     # Verify current password is correct FIXME: this is fudgy
     elif not aaa._verify_password(current_user.username, current_password, current_hash):
