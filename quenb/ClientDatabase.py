@@ -36,6 +36,10 @@ def getClientDetails(db, request, session, query):
         cid = request.client_id
     elif 'cid' in request:
         cid = request.cid
+    elif 'client_id' in query:
+        cid = query.client_id
+    elif 'cid' in query:
+        cid = query.cid
 
     # Otherwise, if there is a client ID in the session data,
     # use that...
@@ -55,11 +59,15 @@ def getClientDetails(db, request, session, query):
     # This is deliberate, as it allows for debugging.
     addr = query.addr or request.remote_addr
 
-    # Attempt to resolve hostname, default to IP
-    try:
-        hostname = socket.gethostbyaddr(addr)[0]
-    except:
-        hostname = addr
+    if hasattr(request, 'hostname'):
+        hostname = request.hostname
+    else:
+        # Attempt to resolve hostname, default to IP
+        try:
+            hostname = socket.gethostbyaddr(addr)[0]
+        except:
+            hostname = addr
+
 
     # MAC address: remove all but hex chars and lowercase-ify it for matching
     mac = query.mac.lower()
@@ -77,6 +85,7 @@ def getClientDetails(db, request, session, query):
         window_width = query.window_width
     else:
         window_width = None
+
     if 'window_height' in query:
         window_height = query.window_height
     else:

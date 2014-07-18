@@ -33,7 +33,7 @@ ruler = ParseRules.QuenbRuleParser()
 
 
 # Not a setting really, but change here on upgrade
-API_VERSION = '0.0.2'
+API_VERSION = '0.0.3'
 
 
 ### Helpers ###
@@ -113,6 +113,8 @@ def get_webclient(db):
 # This is called via AJAX from the webclient, it returns client instructions/data
 @app.get('/display')
 @app.get('/display/')
+@app.post('/display')
+@app.post('/display/')
 def get_display(db):
 
     # Get the client's details
@@ -145,9 +147,10 @@ def get_display(db):
         'window_height': window_height,
     }
 
+    from pprint import pprint
+    pprint(client_info)
 
-
-    response = {}
+    response = {'client_facts': {}}
 
     for rule in RulesDatabase.getRules(db):
         
@@ -174,7 +177,11 @@ def get_display(db):
         if result:
             (client_code, client_info) = ClientResponse.runAction(PLUGIN_DIR, rule['module'], rule['function'], rule['args'], bottle.request, client_info)
             response.update(client_code)
-        #    print "Ran rule: {} and got data: {}".format(rule_text, client_code)
+            
+            # If we have any updated client info to return e.g. client ID, merge that in too
+            if 'client_facts' in client_info:
+                response['client_facts'].update(client_info['client_facts'])
+            #print "Ran rule: {} and got code: {}/info: {}".format(rule_text, client_code, client_info)
 
     return json.dumps(response)
 

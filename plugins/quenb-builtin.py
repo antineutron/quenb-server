@@ -21,7 +21,10 @@ def url_cycle(url_list, request, client_info):
     # determine the position in the cycle. Note the -1
     # so that the first request will pick the 0th element.
     if 'calls' in client_info:
-        calls = int(client_info['calls']) - 1
+        try:
+            calls = int(client_info['calls']) - 1
+        except:
+            calls = 0
     else:
         calls = 0
 
@@ -98,6 +101,7 @@ def set_clientvar(args, request, client_info):
     """
     if len(args) > 1:
         client_info[args[0]] = args[1]
+        client_info['client_facts'] = {args[0] : args[1]}
 
     return({}, client_info)
 
