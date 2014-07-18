@@ -147,9 +147,6 @@ def get_display(db):
         'window_height': window_height,
     }
 
-    from pprint import pprint
-    pprint(client_info)
-
     response = {'client_facts': {}}
 
     for rule in RulesDatabase.getRules(db):
