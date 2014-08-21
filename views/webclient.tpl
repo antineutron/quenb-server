@@ -5,7 +5,7 @@
 body {
     margin: 0;
 }
-iframe {
+iframe#contentpane {
     border: 0;
     width: 100%;
     height: 100%;
@@ -70,5 +70,7 @@ var client_query = {
 
 	<!-- As above, but we can use this to display an arbitrary image fullscreen -->
     <img id="imgfullscreen" class="bg hidden" src="/static/images/tvstatic.gif">
+
+	<iframe id="contentpane"></iframe>
 </body>
 </html>

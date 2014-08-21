@@ -129,6 +129,7 @@ def get_display(db):
 
     client_info = {
         'cid':           cid,
+        'client_id':     cid,
         'version':       version,
         'addr':          addr,
         'hostname':      hostname,
@@ -149,6 +150,7 @@ def get_display(db):
 
     response = {'client_facts': {}}
 
+    #print "Client facts: {}".format(client_info)
     for rule in RulesDatabase.getRules(db):
         
         # For each rule determine if it fires/applies
@@ -162,9 +164,9 @@ def get_display(db):
         #print "Checking rule ID: {} Priority: {} (rule test is: [{}])".format(rule['id'], rule['priority'], rule['rule'])
         rule_text = rule['rule']
         try:
-        #    print "Evaluating against client info [{}]...".format(client_info)
+            #print "Evaluating {} against client info [{}]...".format(rule_text, client_info)
             result = ruler.evaluateRule(rule_text, client_info)
-        #    print "Finished evaluating, result was: {}".format(result)
+            #print "Finished evaluating, result was: {}".format(result)
         except ParseException as e:
             error("Error parsing rule {},{}".format(rule_text, client_info))
             traceback.print_exc()

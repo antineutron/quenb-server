@@ -59,7 +59,7 @@ def runAction(plugin_dir, module_name, function_name, function_args, request, cl
 def _sanitise(name, value):
     """
     Sanitises client information, if it is a known "fact".
-    If we do not know how to sanitise it, return None for that "fact".
+    If we do not know how to sanitise it, return it as-is.
     """
 
     # Lowercase and strip whitespace (most facts will probably need this)
@@ -97,7 +97,7 @@ def _sanitise(name, value):
 
     # Default, it's not a thing we will validate
     else:
-        return (name, None)
+        return (name, value)
 
 def _parseArgs(function_args, client_info):
     """
