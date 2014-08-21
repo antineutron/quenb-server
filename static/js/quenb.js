@@ -12,6 +12,9 @@ var timeout = 20000;
 // MAIN BODY STARTS HERE
 $(document).ready(function(){
 
+    // Make sure our iframe covers the whole of the screen
+ /*   $('#contentpane').height($(window).height()-1);
+    $('#contentpane').width($(window).width()-1);*/
 
     // Build our dict of client info based on the URL and anything else we know.
     // We do this once on the initial page load. The backend server may change
