@@ -4,8 +4,11 @@
 
 <link rel="stylesheet" type="text/css" href="../static/css/quenb.css">
 
-<!-- All javascript in one file -->
-<script src="../static/js/quenb-all.js"></script>
+<!-- jQuery support library -->
+<script src="../static/js/zepto.js"></script>
+
+<!-- Main QuenB client library -->
+<script src="../static/js/quenb.js"></script>
 
 </head>
 <body>

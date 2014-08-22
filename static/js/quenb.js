@@ -1,13 +1,5 @@
-// This stuff is in the templated page.
-
-//var server_supplied_cid = "{{client_id}}";
-//var our_ip = "{{addr}}";
-//
-//var query = "{{query_variables}}";
-
-
 var version = "Webclient,0,0,10";
-var timeout = 10000;
+var timeout = 30000;
 
 // MAIN BODY STARTS HERE
 $(document).ready(function(){
