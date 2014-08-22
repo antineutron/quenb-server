@@ -13,7 +13,7 @@ iframe#contentpane {
 	margin:0;
 	padding:0;
 	overflow:hidden;
-	z-index:999999;
+	z-index:1;
 }
 
 /* from http://css-tricks.com/perfect-full-page-background-image/ */
@@ -42,4 +42,16 @@ img.bg {
 
 .hidden {
     display: none;
+}
+
+#notices {
+	position: absolute;
+	top: 10px;
+	left: 25%;
+	width: 50%;
+	text-align: center;
+	border: 2px solid #BCE8F1;
+	border-radius: 5px;
+	z-index:200000;
+	background-color: #D9EDF7;
 }

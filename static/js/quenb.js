@@ -7,14 +7,10 @@
 
 
 var version = "Webclient,0,0,10";
-var timeout = 20000;
+var timeout = 10000;
 
 // MAIN BODY STARTS HERE
 $(document).ready(function(){
-
-    // Make sure our iframe covers the whole of the screen
- /*   $('#contentpane').height($(window).height()-1);
-    $('#contentpane').width($(window).width()-1);*/
 
     // Build our dict of client info based on the URL and anything else we know.
     // We do this once on the initial page load. The backend server may change
@@ -24,19 +20,15 @@ $(document).ready(function(){
     try {
 
         // Attempt to update our display indefinitely, exceptions will cause a fresh page reload
-        process(client_facts);
+        check_display(client_facts);
 
     } catch (e) {
         // We will flash an error message up, and then refresh the page
         // in 30 seconds.
         $('.special').addClass('hidden');
         $('.special#tvstatic').removeClass('hidden');
-    
-        noty({
-            type: 'error',
-            text: e,
-            layout: 'topCenter'
-        });
+
+        notify('error', e);
     
         // Refresh the page, with no caching, after our default timeout limit
         // NB we do not use the timeout from client_facts in case it's been set to
@@ -52,7 +44,6 @@ $(document).ready(function(){
 // Checks that we got valid data, and falls back to a static image
 // if the attempt fails. 
 function check_display(client_facts) {
-    var data = {};
 
     // Form the query string to get our instructions
     var query_string = "/display?";
@@ -60,20 +51,25 @@ function check_display(client_facts) {
         query_string = query_string + '&' + key + '=' + client_facts[key];
     };
 
-    $.ajax(query_string, {
-        'async': false,
+    $.ajax({
+        'type' : 'get',
+        'url' : query_string,
         'success' : function(data_string) {
             data = JSON.parse(data_string);
+            process(client_facts, data);
         },
         'error' : function() {
             data = {
                 'error': "Failure to contact control server.",
                 'special_show': 'tvstatic'
             };
+            process(client_facts, data);
+        },
+        'complete' : function() {
+            foo = 'completed';
         }
     });
 
-    return data;
 }
 
 // Given two hashes, return a merged hash
@@ -111,41 +107,25 @@ function getClientFacts(){
 }
 
 // Called repeatedly, this is the "real" start point.
-function process(client_facts) {
+function process(client_facts, data) {
 
     // Keep track of how many requests in a row we've made
     client_facts.calls = client_facts.calls + 1;
     
-    // Get our instructions from the backend server
-    var data = check_display(client_facts);
 
     // Display errors for a short time
     if (data.error) {
-        var notification = noty({
-                type: 'error',
-                text: data.error,
-                timeout: 5000,
-                layout: 'topCenter'
-            });
+        notify('error', data.error);
     }
 
     // Display info messages for a short time
     if (data.info) {
-        var notification = noty({
-                type: 'info',
-                text: data.info,
-                timeout: 5000,
-                layout: 'topCenter'
-            });
+        notify('info', data.info);
     }
 
     // Force a page refresh if we need to restart the client
     if (data.restart_client) {
-        noty({
-            type: 'alert',
-            text: "This webclient will reload shortly.",
-            layout: 'topCenter'
-        });
+        notify('alert', 'This webclient will reload shortly.');
 
         // Reload in 5 seconds.
         setTimeout(function() {
@@ -191,10 +171,32 @@ function process(client_facts) {
 
     // Call ourselves again, when we're done
     setTimeout(function() {
-        process(client_facts);
+        // Get our instructions from the backend server and process them
+        check_display(client_facts);
     }, client_facts.timeout);
 }
 
+function notify(type, text) {
+    if (type == 'error') {
+        $('#notices').css('color', '#B94A48');
+        $('#notices').css('border-color', '#EED3D7');
+        $('#notices').css('background-color', '#F2DEDE');
+    } else if (type == 'alert') {
+        $('#notices').css('color', '#468847');
+        $('#notices').css('border-color', '#D6E9C6');
+        $('#notices').css('background-color', '#DFF0D8');
+    } else {
+        $('#notices').css('color', '#3A87AD');
+        $('#notices').css('border-color', '#BCE8F1');
+        $('#notices').css('background-color', '#D9EDF7');
+    }
+    $('#notices').html(text);
+    $('#notices').removeClass('hidden');
+    setTimeout(function(){
+        $('#notices').html('');
+        $('#notices').addClass('hidden');
+    }, 5000);
+}
 
 
 

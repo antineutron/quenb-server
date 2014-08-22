@@ -5,19 +5,17 @@
 <link rel="stylesheet" type="text/css" href="../static/css/quenb.css">
 
 <!-- jQuery support library -->
-<script src="../static/js/jquery-1.9.1.min.js"></script>
-<script src="../static/js/jquery-migrate-1.1.1.min.js"></script>
-
-<!-- Include notification stuff (noty) -->
-<script src="../static/js/noty/jquery.noty.js"></script>
-<script src="../static/js/noty/layouts/all.js"></script>
-<script src="../static/js/noty/themes/default.js"></script>
+<script src="../static/js/zepto.js"></script>
 
 <!-- Main QuenB client library -->
 <script src="../static/js/quenb.js"></script>
 
 </head>
 <body>
+
+	<!-- Notification box -->
+	<div id="notices"></div>
+
     <!-- Special item e.g. to display when things go wrong -->
     <img id="tvstatic" class="bg hidden special" src="../static/images/tvstatic.gif">
 
