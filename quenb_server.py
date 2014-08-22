@@ -96,8 +96,7 @@ def get_about():
 @app.get('/webclient/', template='webclient')
 @app.get('/webclient-dev', template='webclient-dev')
 @app.get('/webclient-dev/', template='webclient-dev')
-@app.get('/webclient-minimal', template='webclient-minimal')
-@app.get('/webclient-minimal/', template='webclient-minimal')
+@app.get('/webclient-minimal.html', template='webclient-minimal')
 def get_webclient(db):
 
     # Get (or create) the client ID

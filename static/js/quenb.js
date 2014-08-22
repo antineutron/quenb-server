@@ -1,5 +1,6 @@
 var version = "Webclient,0,0,10";
 var timeout = 30000;
+var control_server = '';
 
 // MAIN BODY STARTS HERE
 $(document).ready(function(){
@@ -38,7 +39,7 @@ $(document).ready(function(){
 function check_display(client_facts) {
 
     // Form the query string to get our instructions
-    var query_string = "/display?";
+    var query_string = control_server+"/display?";
     for (key in client_facts) {
         query_string = query_string + '&' + key + '=' + client_facts[key];
     };
@@ -56,9 +57,6 @@ function check_display(client_facts) {
                 'special_show': 'tvstatic'
             };
             process(client_facts, data);
-        },
-        'complete' : function() {
-            foo = 'completed';
         }
     });
 
@@ -78,7 +76,21 @@ function overrideFacts(facts1, facts2){
 function getClientFacts(){
 
     // Remove leading ? and split on & to get key=value pairs
-    var qstring_params = window.location.search.substr(1).split('&');
+    var params = window.location.search.substr(1).split('&');
+
+    // Now process the pairs into a hash
+    var qstring_params = {};
+    params.map(function(a){pair = a.split('='); qstring_params[pair[0]] = pair[1];});
+
+    // We allow the control server to be specified in the query string,
+    // so that we can e.g. run from a file:// URL and still give a path
+    // to the controller, however we don't want to allow the control server
+    // to bounce us to a different controller. Maybe that's useful but could
+    // be open to abuse!
+    if ('control_server' in qstring_params) {
+        control_server = qstring_params.control_server;
+        delete qstring_params.control_server;
+    }
 
     // Set defaults...
     var client_facts = {
