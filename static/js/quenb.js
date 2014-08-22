@@ -195,7 +195,7 @@ function notify(type, text) {
     setTimeout(function(){
         $('#notices').html('');
         $('#notices').addClass('hidden');
-    }, 5000);
+    }, 4000);
 }
 
 

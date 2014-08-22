@@ -47,11 +47,13 @@ img.bg {
 #notices {
 	position: absolute;
 	top: 10px;
-	left: 25%;
-	width: 50%;
+	left: 33%;
+	width: 33%;
 	text-align: center;
+	padding: 10px;
 	border: 2px solid #BCE8F1;
 	border-radius: 5px;
 	z-index:200000;
 	background-color: #D9EDF7;
+	opacity: 0.9;
 }
