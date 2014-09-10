@@ -1,4 +1,34 @@
  %include head.tpl current_user=current_user
+<div class="modal fade modal-dialog modal-content" id="addActionModal" tabindex="-1" role="dialog" aria-labelledby="addActionModalLabel" aria-hidden="true">
+  <div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+  <h4 id="addActionModalLabel">Add action</h4>
+  </div>
+
+  <form class="well" data-target="#addActionModal" action="/admin/action" method="PUT" id="addActionModalForm">
+  <div class="modal-body">
+      <fieldset>
+        <label for='title'>Title</label>
+        <input type='text' name='title' placeholder='Title'/>
+        <label for='description'>Description</label>
+        <input type='text' name='description' placeholder='Description'/>
+        <label for='plugin'>Plugin function</label>
+        <select name='plugin'>
+          % for plugin in plugins:
+          <option value='{{plugin}}'>{{plugin}}</option>
+          % end for
+        </select>
+        <label for='args'>Plugin function arguments (comma-separated)</label>
+        <input type='text' name='args'/>
+      </fieldset>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <input type="submit" class="btn btn-primary" id="addActionModalSubmit" value="Add new action"/>
+  </div>
+  </form>
+</div>
     <div class="center">
       <h2>Actions</h2>
       <p>
@@ -40,36 +70,6 @@
  
 
 
-<div class="modal fade modal-dialog modal-content" id="addActionModal" tabindex="-1" role="dialog" aria-labelledby="addActionModalLabel" aria-hidden="true">
-  <div class="modal-header">
-  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-  <h4 id="addActionModalLabel">Add action</h4>
-  </div>
-
-  <form class="well" data-target="#addActionModal" action="/admin/action" method="PUT" id="addActionModalForm">
-  <div class="modal-body">
-      <fieldset>
-        <label for='title'>Title</label>
-        <input type='text' name='title' placeholder='Title'/>
-        <label for='description'>Description</label>
-        <input type='text' name='description' placeholder='Description'/>
-        <label for='plugin'>Plugin function</label>
-        <select name='plugin'>
-          % for plugin in plugins:
-          <option value='{{plugin}}'>{{plugin}}</option>
-          % end for
-        </select>
-        <label for='args'>Plugin function arguments (comma-separated)</label>
-        <input type='text' name='args'/>
-      </fieldset>
-  </div>
-
-  <div class="modal-footer">
-    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-    <input type="submit" class="btn btn-primary" id="addActionModalSubmit" value="Add new action"/>
-  </div>
-  </form>
-</div>
 
 
 

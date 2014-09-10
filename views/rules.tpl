@@ -1,4 +1,33 @@
  % include head.tpl current_user=current_user
+<div class="modal fade modal-dialog modal-content" id="addRuleModal" tabindex="-1" role="dialog" aria-labelledby="addRuleModalLabel" aria-hidden="true">
+  <div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+  <h4 id="addRuleModalLabel">Add rule</h4>
+  </div>
+
+  <form class="well" data-target="#addRuleModal" action="/admin/rule" method="PUT" id="addRuleModalForm">
+  <div class="modal-body">
+      <fieldset>
+        <label for='rule'>Rule</label>
+        <input type='textarea' name='rule' value='true'/>
+
+        <label for='action'>Action to take when rule 'hits'</label>
+        <select name='action'>
+          % for action in actions:
+          <option value='{{action['id']}}'>{{action['title']}} ({{action['description']}})</option>
+          % end for
+        </select>
+        <label for='priority'>Rule priority (if multiple rules match, higher priority overrides lower priority)</label>
+		<input type='text' name='priority' value='1'/>
+      </fieldset>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <input type="submit" class="btn btn-primary" id="addRuleModalSubmit" value="Add new rule"/>
+  </div>
+  </form>
+</div>
     <div class="center">
       <h2>Rules</h2>
       <p>
@@ -40,35 +69,6 @@
 		</tfoot>
       </table>
 
-<div class="modal fade modal-dialog modal-content" id="addRuleModal" tabindex="-1" role="dialog" aria-labelledby="addRuleModalLabel" aria-hidden="true">
-  <div class="modal-header">
-  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-  <h4 id="addRuleModalLabel">Add rule</h4>
-  </div>
-
-  <form class="well" data-target="#addRuleModal" action="/admin/rule" method="PUT" id="addRuleModalForm">
-  <div class="modal-body">
-      <fieldset>
-        <label for='rule'>Rule</label>
-        <input type='textarea' name='rule' value='true'/>
-
-        <label for='action'>Action to take when rule 'hits'</label>
-        <select name='action'>
-          % for action in actions:
-          <option value='{{action['id']}}'>{{action['title']}} ({{action['description']}})</option>
-          % end for
-        </select>
-        <label for='priority'>Rule priority (if multiple rules match, higher priority overrides lower priority)</label>
-		<input type='text' name='priority' value='1'/>
-      </fieldset>
-  </div>
-
-  <div class="modal-footer">
-    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-    <input type="submit" class="btn btn-primary" id="addRuleModalSubmit" value="Add new rule"/>
-  </div>
-  </form>
-</div>
       <script>
 
 	  // When add rule modal form is submitted, convert to
