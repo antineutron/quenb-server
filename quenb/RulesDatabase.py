@@ -21,6 +21,12 @@ def setup(db):
                action INTEGER NOT NULL,
                FOREIGN KEY(action) REFERENCES actions(id))""")
 
+    db.execute("""CREATE TABLE IF NOT EXISTS oneshot_rules
+               (id INTEGER PRIMARY KEY,
+               priority INT NOT NULL, rule TEXT,
+               action INTEGER NOT NULL,
+               FOREIGN KEY(action) REFERENCES actions(id))""")
+
     # TODO The default action is hit if there is no configuration
     # on the server, so make it something funny.
     db.execute("""INSERT OR IGNORE INTO actions
