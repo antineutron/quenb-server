@@ -49,13 +49,26 @@ def getRules(db):
     Given the QuenB database, return a result with rule/action tuples
     """
     with db:
-        return [dict(row) for row in db.execute("""
+        oneshots = [dict(row) for row in db.execute("""
+          SELECT oneshot_rules.id AS id, priority, rule, action, module, function, args, title, description
+          FROM oneshot_rules
+          INNER JOIN actions
+          ON oneshot_rules.action = actions.id
+          ORDER BY priority ASC
+        """)]
+
+        main = [dict(row) for row in db.execute("""
           SELECT rules.id AS id, priority, rule, action, module, function, args, title, description
           FROM rules
           INNER JOIN actions
           ON rules.action = actions.id
           ORDER BY priority ASC
         """)]
+
+        return {
+            'oneshots' : oneshots,
+            'main' : main,
+        }
 
 def getRule(db, id):
     """
@@ -144,15 +157,21 @@ def postRule(db, id, _data):
         else:
             return None
 
-def deleteRule(db, id):
+def deleteRule(db, id, oneshot = False):
     """
     Given the QuenB database, delete a rule
     """
     with db:
-        db.execute("""
-          DELETE FROM rules
-          WHERE id = ?
-        """, (id,))
+        if oneshot:
+            db.execute("""
+              DELETE FROM oneshot_rules
+              WHERE id = ?
+            """, (id,))
+        else:
+            db.execute("""
+              DELETE FROM rules
+              WHERE id = ?
+            """, (id,))
 
 
 def updateRuleField(db, rule_id, field, value):

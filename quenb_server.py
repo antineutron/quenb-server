@@ -149,27 +149,29 @@ def get_display(db):
         'time_second':   now.second,
         'window_width':  window_width,
         'window_height': window_height,
+        'client_facts' : {},
     }
 
     response = {'client_facts': {}}
 
     #print "Client facts: {}".format(client_info)
-    for rule in RulesDatabase.getRules(db):
+    rules = RulesDatabase.getRules(db)
         
-        # For each rule determine if it fires/applies
-        # if so, then those actions are applied to the output
+    # For each rule determine if it fires/applies
+    # if so, then those actions are applied to the output
 
-        # the rules are done from lowest to highest, so the higher
-        # the priority, it'll apply the actions LAST, and thus be
-        # the set that is sent.
+    # the rules are done from lowest to highest, so the higher
+    # the priority, it'll apply the actions LAST, and thus be
+    # the set that is sent.
+
+    # First we will try the one-shot rules; these will be deleted from the database
+    # as soon as they fire
+    for rule in rules['oneshots']:
 
         # Parse the rule and evaluate
-        #print "Checking rule ID: {} Priority: {} (rule test is: [{}])".format(rule['id'], rule['priority'], rule['rule'])
         rule_text = rule['rule']
         try:
-            #print "Evaluating {} against client info [{}]...".format(rule_text, client_info)
             result = ruler.evaluateRule(rule_text, client_info)
-            #print "Finished evaluating, result was: {}".format(result)
         except ParseException as e:
             error("Error parsing rule {},{}".format(rule_text, client_info))
             traceback.print_exc()
@@ -179,11 +181,30 @@ def get_display(db):
         if result:
             (client_code, client_info) = ClientResponse.runAction(PLUGIN_DIR, rule['module'], rule['function'], rule['args'], bottle.request, client_info)
             response.update(client_code)
+            RulesDatabase.deleteRule(db, rule['id'], True)
             
-            # If we have any updated client info to return e.g. client ID, merge that in too
-            if 'client_facts' in client_info:
-                response['client_facts'].update(client_info['client_facts'])
-            #print "Ran rule: {} and got code: {}/info: {}".format(rule_text, client_code, client_info)
+
+    for rule in rules['main']:
+
+        # Parse the rule and evaluate
+        rule_text = rule['rule']
+        try:
+            result = ruler.evaluateRule(rule_text, client_info)
+        except ParseException as e:
+            error("Error parsing rule {},{}".format(rule_text, client_info))
+            traceback.print_exc()
+            continue
+
+        # Rule matched: Load the action and apply it
+        if result:
+            (client_code, client_info) = ClientResponse.runAction(PLUGIN_DIR, rule['module'], rule['function'], rule['args'], bottle.request, client_info)
+        
+        response.update(client_code)
+            
+    # If we have any updated client info to return e.g. client ID, merge that in too
+    #if 'client_facts' in client_info:
+        #response['client_facts'].update(client_info['client_facts'])
+    #print "Ran rule: {} and got code: {}/info: {}".format(rule_text, client_code, client_info)
 
     return json.dumps(response)
 
