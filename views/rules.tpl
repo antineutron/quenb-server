@@ -44,7 +44,7 @@
           <tr><th>Priority</th><th>Rule</th><th>Action</th><th>Delete</th></tr>
 		</thead>
 		<tbody>
-        % for rule in rules:
+        % for rule in rules['main']:
         <tr id='rule-{{rule['id']}}'>
 		  <td>
 		    <span class='editable_priority'>{{rule['priority']}}</span>
@@ -84,21 +84,16 @@
             data: $form.serialize(),
  
             success: function(data, status) {
+				$($target).modal('hide');
 				d = data['rule'];
 				buttonText = "<button class='btn btn-default glyphicon glyphicon-remove-circle' alt='Delete'\n"+
 				             "       onclick='deleteRule(" + d['id'] + "); return false;'></button>";
-				tblRow = [d['priority'], d['rule'], d['action_title'], buttonText];
+				tblRow = [d['priority'].toString(), d['rule'], d['action_title'], buttonText];
 				oData.fnAddData(tblRow);
-				$($target).modal('hide');
             },
 			error : function(data){
 				$($target).modal('hide');
-				noty({
-                  type: 'error',
-                  text: 'Failed to create rule: '+data.statusText,
-                  timeout: 5000,
-                  layout: 'topCenter'
-                });
+                alert('Failed to create rule: '+data.statusText);
 			}
         });
  
@@ -118,12 +113,7 @@
 				oData.fnDeleteRow($('tr#rule-'+id)[0]);
 			},
 			error : function(data){
-				noty({
-                  type: 'error',
-                  text: 'Failed to delete rule: '+data.statusText,
-                  timeout: 5000,
-                  layout: 'topCenter'
-                });
+                alert('Failed to delete rule: '+data.statusText);
 			}
 		});
 	  }
