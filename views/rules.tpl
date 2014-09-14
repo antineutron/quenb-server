@@ -45,7 +45,7 @@
 		</thead>
 		<tbody>
         % for rule in rules:
-        <tr id='{{rule['id']}}'>
+        <tr id='rule-{{rule['id']}}'>
 		  <td>
 		    <span class='editable_priority'>{{rule['priority']}}</span>
 		  </td>
@@ -115,7 +115,7 @@
 			type : 'DELETE',
 			dataType : 'json',
 			success : function(data){
-				oData.fnDeleteRow($('tr #'+id));
+				oData.fnDeleteRow($('tr#rule-'+id)[0]);
 			},
 			error : function(data){
 				noty({
@@ -134,7 +134,9 @@
         $(document).ready(function() {
 
 			// Make a DataTable out of our rules list
-			var oTable = $('#ruleTable').dataTable();
+			var oTable = $('#ruleTable').dataTable({
+				pageLength: 50
+			});
 
     		// Submit function for inline editing
     		var inline_submit = function ( value, settings ) {

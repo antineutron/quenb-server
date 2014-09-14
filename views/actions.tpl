@@ -45,7 +45,7 @@
 		</thead>
 		<tbody>
         % for action in actions:
-        <tr id='{{action['id']}}'>
+        <tr id='action-{{action['id']}}'>
           <td>
 			<span class='editable'>{{action['title']}}</span></td>
           <td>
@@ -120,7 +120,7 @@
 			'type' : 'DELETE',
 			'dataType' : 'json',
 			'success' : function(data){
-				oData.fnDeleteRow($('tr #'+id));
+				oData.fnDeleteRow($('tr#action-'+id)[0]);
 			},
 			'error' : function(data){
 				noty({

@@ -6,9 +6,6 @@
 	<script src='/static/js/jquery.dataTables.min.js'></script>
     <script src="/static/js/jquery.jeditable.mini.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
-    <script src="/static/js/noty/jquery.noty.js"></script>
-    <script src="/static/js/noty/layouts/all.js"></script>
-    <script src="/static/js/noty/themes/default.js"></script>
 
     <link rel='stylesheet' href='/static/js/jquery-ui.css'>
     <link rel="stylesheet" href="/static/js/bootstrap-cerulean.min.css">
