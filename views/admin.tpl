@@ -24,7 +24,7 @@
 		  <td>{{client.get('last_heard')}}</td>
 		  <td>
 		    <a href='/restart_client?id={{client.get('cid')}}'>Restart client</a>
-			<a href='/block_client?id={{client.get('cid')}}'>Block client</a>
+			<a href='/webclient?cid={{client.get('cid')}}'>Client view</a>
 			<a href='/rule_from_client?id={{client.get('cid')}}'>Create client rule</a>
 		  </td>
 		</tr>

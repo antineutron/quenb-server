@@ -45,18 +45,18 @@
 		</thead>
 		<tbody>
         % for action in actions:
-        <tr id='action-{{action['id']}}'>
+        <tr id="action-{{action['id']}}" data-action-id="{{action['id']}}">
           <td>
-			<span class='editable'>{{action['title']}}</span></td>
+			<span class="editable">{{action["title"]}}</span></td>
           <td>
-		    <span class='select_plugin' style="display: inline">{{action['module']}}.{{action['function']}}</span>
-			(<span class='module_args'>{{action['args'] or ''}}</span>)
+		    <span class="select_plugin" style="display: inline">{{action["module"]}}.{{action["function"]}}</span>
+			(<span class="module_args">{{action["args"] or ""}}</span>)
 	      </td>
-          <td><span class='editable'>{{action['description']}}</span></td>
+          <td><span class="editable">{{action["description"]}}</span></td>
 		  <td>
 		    % if action['id'] > 0:
-		    <button class='btn btn-default glyphicon glyphicon-remove-circle' alt='Delete'
-			        onclick='deleteAction({{action['id']}}); return false;'></button>
+		    <button class="btn btn-default glyphicon glyphicon-remove-circle" alt="Delete"
+			        onclick="deleteAction({{action['id']}}); return false;"></button>
 			% end if
 		  </td>
         </tr>
@@ -140,12 +140,10 @@
 
             // Submit function for inline editing 
             var inline_submit = function ( value, settings ) { 
-                actionID = this.parentNode.getAttribute('id'); 
                 fieldPosition = oTable.fnGetPosition( this )[2]; 
                 fieldName = $('#actionTable thead th')[fieldPosition].innerHTML.toLowerCase(); 
                 return { 
-                    "action_id": actionID, 
-                    "field":  fieldName 
+                    fieldName : value
                 }; 
             }; 
 
@@ -157,7 +155,8 @@
             }; 
  
             // Make text fields in-place editable 
-            oTable.$('td.editable').editable( '/admin/actions/', { 
+            oTable.$('td.editable').editable({
+				"url" : '/admin/actions/', //+$(this).parentNode.getAttribute('data-action-id'),
                 "type" : 'text', 
                 "callback": inline_update, 
                 "submitdata": inline_submit, 
@@ -165,18 +164,18 @@
                 "onblur" : "submit" 
             } ); 
 
-            oTable.$('.module_args').editable( '/admin/actions/', { 
+            /*oTable.$('.module_args').editable({ 
+				"url" : '/admin/action/'+$(this).parentNode.parentNode.getAttribute('data-action-id'),
                 "type" : 'text', 
                 "callback": inline_update, 
                 "submitdata": function(value, settings){
 					return {
-						"action_id": this.parentNode.getAttribute('id'),
 						"args" : value
 					};
 				},
                 "width": "100%", 
                 "onblur" : "submit" 
-            } ); 
+            } ); */
  
             // Make selectable fields select lists 
             oTable.$('span.select_plugin').editable( '/admin/actions/update_field', { 
