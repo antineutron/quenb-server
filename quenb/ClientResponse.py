@@ -123,7 +123,7 @@ def _parseArgs(function_args, client_info):
  
     # Now run the given args through SimpleTemplate to do variable replacements
     for arg in _arg_list:
-        foo = Template(arg).safe_substitute(sanitised_info)
+        foo = Template(arg.strip()).safe_substitute(sanitised_info)
         arg_list.append(foo)
 
 

@@ -39,7 +39,7 @@ def url_cycle_random(url_list, request, client_info):
 
     next_url = url_list[ randint(0, len(url_list)-1) ]
 
-    return display_url(next_url, request, client_info)
+    return display_url([next_url], request, client_info)
 
 def special_show(args, request, client_info):
     """
